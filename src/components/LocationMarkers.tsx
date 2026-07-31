@@ -11,12 +11,24 @@ interface Props {
   onSelectLocation: (loc: Location) => void;
 }
 
-function createPin(color: string) {
-  const s = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
-    <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.268 21.732 0 14 0z" fill="${color}" stroke="#fff" stroke-width="2"/>
-    <circle cx="14" cy="13" r="5" fill="#fff"/>
+// L.icon 渲染为 <img>，和瓦片共享合成层，flyTo 不漂移
+const pinCache = new Map<string, L.Icon>();
+function createPin(color: string): L.Icon {
+  const cached = pinCache.get(color);
+  if (cached) return cached;
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="36" viewBox="0 0 28 36">
+    <path d="M14 0C6.268 0 0 6.268 0 14c0 10.5 14 22 14 22s14-11.5 14-22C28 6.268 21.732 0 14 0z" fill="${color}" stroke="white" stroke-width="2"/>
+    <circle cx="14" cy="13" r="5" fill="white"/>
   </svg>`;
-  return L.divIcon({ html: s, className: 'custom-marker', iconSize: [28, 36], iconAnchor: [14, 36], tooltipAnchor: [14, -20] });
+  const icon = L.icon({
+    iconUrl: 'data:image/svg+xml,' + encodeURIComponent(svg),
+    iconSize: [28, 36],
+    iconAnchor: [14, 36],
+    tooltipAnchor: [14, -20],
+    className: 'custom-marker',
+  });
+  pinCache.set(color, icon);
+  return icon;
 }
 
 export default function LocationMarkers({ locations, trips, selectedLocation, onSelectLocation }: Props) {
