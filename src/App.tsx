@@ -66,6 +66,7 @@ export default function App() {
   const handleAddTrip = useCallback(async (trip: { name: string; date: string; color: TripColor }): Promise<string> => {
     const id = uuidv4();
     await addTrip({ ...trip, id, locations: [] });
+    Notification.success({ message: '已创建', description: `${trip.name} 已创建` });
     return id;
   }, [addTrip]);
 

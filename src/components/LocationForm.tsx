@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Modal, Form, FormItem, Input, Select, Button, useForm } from 'animal-island-ui';
+import { Modal, Form, FormItem, Input, Select, Button, useForm, Notification } from 'animal-island-ui';
 import type { Trip, Location, TripColor } from '../types';
 // TRIP_COLORS available for color selection if needed
 
@@ -31,27 +31,31 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
   const isNewTrip = !editingLocation && trips.length === 0;
 
   const handleFinish = useCallback(async (values: LocationFormValues) => {
-    let targetTripId = values.tripId;
+    try {
+      let targetTripId = values.tripId;
 
-    if (values.tripId === '__new__') {
-      targetTripId = await onAddTrip({
-        name: values.tripName,
-        date: values.tripDate,
-        color: values.tripColor,
+      if (values.tripId === '__new__') {
+        targetTripId = await onAddTrip({
+          name: values.tripName,
+          date: values.tripDate,
+          color: values.tripColor,
+        });
+      }
+
+      await onSubmit(targetTripId, {
+        city: values.city,
+        date: values.date,
+        description: values.description,
+        lat: parseFloat(values.lat),
+        lng: parseFloat(values.lng),
+        tags: values.tags,
+        photo: values.photo || '',
       });
+      form.resetFields();
+      onClose();
+    } catch (e) {
+      Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
     }
-
-    onSubmit(targetTripId, {
-      city: values.city,
-      date: values.date,
-      description: values.description,
-      lat: parseFloat(values.lat),
-      lng: parseFloat(values.lng),
-      tags: values.tags,
-      photo: values.photo || '',
-    });
-    form.resetFields();
-    onClose();
   }, [onSubmit, onAddTrip, form, onClose]);
 
   const tripOptions = [
