@@ -58,10 +58,12 @@ export function useTravelsData(token: string | null) {
   }, [trips, persistTrips]);
 
   const deleteLocation = useCallback(async (locationId: string) => {
-    const newTrips = trips.map(trip => ({
-      ...trip,
-      locations: trip.locations.filter(loc => loc.id !== locationId),
-    }));
+    const newTrips = trips
+      .map(trip => ({
+        ...trip,
+        locations: trip.locations.filter(loc => loc.id !== locationId),
+      }))
+      .filter(trip => trip.locations.length > 0);
     await persistTrips(newTrips);
   }, [trips, persistTrips]);
 
