@@ -1,7 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { Modal, Form, FormItem, Input, Select, Button, useForm, Notification } from 'animal-island-ui';
 import type { Trip, Location, TripColor } from '../types';
-// TRIP_COLORS available for color selection if needed
+import { TRIP_COLORS } from '../constants';
 
 interface LocationFormValues {
   city: string;
@@ -21,14 +21,14 @@ interface LocationFormProps {
   open: boolean;
   trips: Trip[];
   editingLocation: Location | null;
-  onSubmit: (tripId: string, location: Omit<Location, 'id'>, tripInfo?: { name: string; date: string; color: TripColor }) => void;
+  onSubmit: (tripId: string, location: Omit<Location, 'id'>) => void;
   onAddTrip: (trip: { name: string; date: string; color: TripColor }) => Promise<string>;
   onClose: () => void;
 }
 
 export default function LocationForm({ open, trips, editingLocation, onSubmit, onAddTrip, onClose }: LocationFormProps) {
   const [form] = useForm<LocationFormValues>();
-  const isNewTrip = !editingLocation && trips.length === 0;
+  const [isNewTrip, setIsNewTrip] = useState(trips.length === 0);
 
   const handleFinish = useCallback(async (values: LocationFormValues) => {
     try {
@@ -52,6 +52,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         photo: values.photo || '',
       });
       form.resetFields();
+      setIsNewTrip(false);
       onClose();
     } catch (e) {
       Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
@@ -63,6 +64,8 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     { key: '__new__', label: '+ 新建旅行' },
   ];
 
+  const colorOptions = TRIP_COLORS.map(c => ({ key: c, label: c }));
+
   const tagOptions = [
     { label: '自然风光', value: '自然风光' },
     { label: '美食', value: '美食' },
@@ -72,18 +75,22 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     { label: '山野', value: '山野' },
   ];
 
+  const initialTripId = editingLocation
+    ? trips.find(t => t.locations.some(l => l.id === editingLocation.id))?.id || (trips[0]?.id ?? '__new__')
+    : (trips[0]?.id ?? '__new__');
+
   return (
     <Modal
       open={open}
       title={editingLocation ? `编辑 - ${editingLocation.city}` : '新增地点'}
-      onClose={onClose}
+      onClose={() => { form.resetFields(); setIsNewTrip(false); onClose(); }}
       footer={null}
       typewriter={false}
     >
       <Form
         form={form as any}
         initialValues={{
-          tripId: editingLocation ? trips.find(t => t.locations.some(l => l.id === editingLocation.id))?.id || trips[0]?.id || '__new__' : isNewTrip ? '__new__' : trips[0]?.id || '__new__',
+          tripId: initialTripId,
           city: editingLocation?.city || '',
           date: editingLocation?.date || '',
           description: editingLocation?.description || '',
@@ -98,10 +105,40 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         layout="vertical"
         onFinish={handleFinish as any}
       >
+        {/* 所属旅行 */}
         <FormItem label="所属旅行" name="tripId" rules={[{ required: true, message: '请选择旅行' }]}>
-          <Select options={tripOptions} value={form.getFieldValue('tripId') as string} onChange={v => form.setFieldValue('tripId', v)} />
+          <Select
+            options={tripOptions}
+            value={form.getFieldValue('tripId') as string}
+            onChange={v => {
+              form.setFieldValue('tripId', v);
+              setIsNewTrip(v === '__new__');
+            }}
+          />
         </FormItem>
 
+        {/* 新建旅行时显示额外字段 */}
+        {isNewTrip && (
+          <>
+            <FormItem label="旅行名称" name="tripName" rules={[{ required: true, message: '请输入旅行名称' }]}>
+              <Input placeholder="例如：杭州之旅" />
+            </FormItem>
+
+            <FormItem label="旅行日期" name="tripDate" rules={[{ required: true, message: '请输入旅行日期' }]}>
+              <Input placeholder="例如：2025-03" />
+            </FormItem>
+
+            <FormItem label="路线颜色" name="tripColor">
+              <Select
+                options={colorOptions}
+                value={form.getFieldValue('tripColor') as string}
+                onChange={v => form.setFieldValue('tripColor', v as TripColor)}
+              />
+            </FormItem>
+          </>
+        )}
+
+        {/* 地点信息 */}
         <FormItem label="城市名" name="city" rules={[{ required: true, message: '请输入城市名' }]}>
           <Input placeholder="例如：杭州" />
         </FormItem>
@@ -110,18 +147,24 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
           <Input placeholder="例如：2025-03-15" />
         </FormItem>
 
-        <FormItem label="纬度" name="lat" rules={[{ required: true, message: '请输入纬度' }]}>
-          <Input placeholder="例如：30.2741" />
-        </FormItem>
-
-        <FormItem label="经度" name="lng" rules={[{ required: true, message: '请输入经度' }]}>
-          <Input placeholder="例如：120.1551" />
-        </FormItem>
+        <div style={{ display: 'flex', gap: 12 }}>
+          <div style={{ flex: 1 }}>
+            <FormItem label="纬度" name="lat" rules={[{ required: true, message: '请输入纬度' }]}>
+              <Input placeholder="例如：30.2741" />
+            </FormItem>
+          </div>
+          <div style={{ flex: 1 }}>
+            <FormItem label="经度" name="lng" rules={[{ required: true, message: '请输入经度' }]}>
+              <Input placeholder="例如：120.1551" />
+            </FormItem>
+          </div>
+        </div>
 
         <FormItem label="描述" name="description" rules={[{ required: true, message: '请输入描述' }]}>
           <Input placeholder="一起做了什么..." />
         </FormItem>
 
+        {/* 标签 */}
         <FormItem label="标签" name="tags">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tagOptions.map(tag => {
@@ -137,7 +180,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
                     form.setFieldValue('tags', next);
                   }}
                   style={{
-                    padding: '2px 10px',
+                    padding: '3px 12px',
                     borderRadius: 999,
                     fontSize: 12,
                     fontWeight: 600,
