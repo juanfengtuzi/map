@@ -56,10 +56,21 @@ html, body, #root {
   font-size: 18px !important;
 }
 
-/* 标记点悬停效果 */
+/* 标记点 — GPU 加速，消除 flyTo 漂移 */
+.leaflet-marker-pane {
+  will-change: transform;
+}
+.leaflet-marker-pane > * {
+  will-change: transform;
+}
 .custom-marker {
+  will-change: transform;
   transition: transform 0.15s ease;
 }
 .custom-marker:hover {
   transform: scale(1.2);
+}
+/* Tooltip — 同样消除漂移 */
+.leaflet-tooltip-pane {
+  will-change: transform;
 }

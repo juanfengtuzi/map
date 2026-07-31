@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import type { Trip, Location } from '../types';
@@ -15,13 +15,16 @@ interface MapViewProps {
 
 function FitBounds({ trips }: { trips: Trip[] }) {
   const map = useMap();
+  const hasRun = useRef(false);
 
   useEffect(() => {
+    if (hasRun.current) return; // 仅首次加载自动适配
     const allLocs = trips.flatMap(t => t.locations);
     if (allLocs.length === 0) return;
     const bounds = L.latLngBounds(allLocs.map(l => [l.lat, l.lng]));
     if (bounds.isValid()) {
-      map.fitBounds(bounds, { padding: [50, 50] });
+      hasRun.current = true;
+      map.fitBounds(bounds, { padding: [50, 50], animate: false }); // 不要动画，避免和 flyTo 冲突
     }
   }, [trips, map]);
 
@@ -39,7 +42,8 @@ function FlyToTrip({ trips, flyToTripId }: { trips: Trip[]; flyToTripId: string 
     const lngs = trip.locations.map(l => l.lng);
     const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
     const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
-    map.flyTo([centerLat, centerLng], Math.max(map.getZoom(), 8), { duration: 1.5 });
+    map.stop(); // 取消任何进行中的动画，防止漂移
+    map.flyTo([centerLat, centerLng], Math.max(map.getZoom(), 8), { duration: 1.2 });
   }, [flyToTripId, trips, map]);
 
   return null;
