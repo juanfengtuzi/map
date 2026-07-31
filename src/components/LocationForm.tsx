@@ -1,5 +1,5 @@
-import { useCallback, useState } from 'react';
-import { Modal, Form, FormItem, Input, Select, Button, useForm, Notification } from 'animal-island-ui';
+import { useCallback, useState, useEffect } from 'react';
+import { Drawer, Form, FormItem, Input, Select, Button, useForm, Notification } from 'animal-island-ui';
 import type { Trip, Location, TripColor } from '../types';
 import { TRIP_COLORS } from '../constants';
 
@@ -7,8 +7,6 @@ interface LocationFormValues {
   city: string;
   date: string;
   description: string;
-  lat: string;
-  lng: string;
   tags: string[];
   photo: string;
   tripId: string;
@@ -21,16 +19,48 @@ interface LocationFormProps {
   open: boolean;
   trips: Trip[];
   editingLocation: Location | null;
+  pickedLat: number | null;
+  pickedLng: number | null;
   onSubmit: (tripId: string, location: Omit<Location, 'id'>) => void;
   onAddTrip: (trip: { name: string; date: string; color: TripColor }) => Promise<string>;
   onClose: () => void;
 }
 
-export default function LocationForm({ open, trips, editingLocation, onSubmit, onAddTrip, onClose }: LocationFormProps) {
+const tagOptions = [
+  { label: '自然风光', value: '自然风光' },
+  { label: '美食', value: '美食' },
+  { label: '城市漫步', value: '城市漫步' },
+  { label: '历史文化', value: '历史文化' },
+  { label: '海边', value: '海边' },
+  { label: '山野', value: '山野' },
+];
+
+export default function LocationForm({ open, trips, editingLocation, pickedLat, pickedLng, onSubmit, onAddTrip, onClose }: LocationFormProps) {
   const [form] = useForm<LocationFormValues>();
   const [isNewTrip, setIsNewTrip] = useState(trips.length === 0);
 
+  useEffect(() => {
+    if (editingLocation) {
+      form.setFieldsValue({
+        city: editingLocation.city,
+        date: editingLocation.date,
+        description: editingLocation.description,
+        tags: editingLocation.tags,
+        photo: editingLocation.photo,
+        tripId: trips.find(t => t.locations.some(l => l.id === editingLocation.id))?.id || '__new__',
+        tripName: '',
+        tripDate: '',
+        tripColor: 'app-pink',
+      });
+    }
+  }, [editingLocation, trips, form]);
+
   const handleFinish = useCallback(async (values: LocationFormValues) => {
+    if (pickedLat === null || pickedLng === null) {
+      Notification.warning({ message: '请先点击地图标记位置', description: '在地图上点击你要记录的地点' });
+      return;
+    }
+
     try {
       let targetTripId = values.tripId;
 
@@ -46,8 +76,8 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         city: values.city,
         date: values.date,
         description: values.description,
-        lat: parseFloat(values.lat),
-        lng: parseFloat(values.lng),
+        lat: pickedLat,
+        lng: pickedLng,
         tags: values.tags,
         photo: values.photo || '',
       });
@@ -57,7 +87,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     } catch (e) {
       Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
     }
-  }, [onSubmit, onAddTrip, form, onClose]);
+  }, [onSubmit, onAddTrip, form, onClose, pickedLat, pickedLng]);
 
   const tripOptions = [
     ...trips.map(t => ({ key: t.id, label: t.name })),
@@ -66,40 +96,25 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
 
   const colorOptions = TRIP_COLORS.map(c => ({ key: c, label: c }));
 
-  const tagOptions = [
-    { label: '自然风光', value: '自然风光' },
-    { label: '美食', value: '美食' },
-    { label: '城市漫步', value: '城市漫步' },
-    { label: '历史文化', value: '历史文化' },
-    { label: '海边', value: '海边' },
-    { label: '山野', value: '山野' },
-  ];
-
-  const initialTripId = editingLocation
-    ? trips.find(t => t.locations.some(l => l.id === editingLocation.id))?.id || (trips[0]?.id ?? '__new__')
-    : (trips[0]?.id ?? '__new__');
+  const hasCoords = pickedLat !== null && pickedLng !== null;
 
   return (
-    <Modal
+    <Drawer
       open={open}
-      title={editingLocation ? `编辑 - ${editingLocation.city}` : '新增地点'}
+      title="新增旅行记忆"
+      placement="right"
+      width={400}
       onClose={() => { form.resetFields(); setIsNewTrip(false); onClose(); }}
-      footer={null}
-      typewriter={false}
-      width={560}
     >
-      <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: 4 }}>
       <Form
         form={form as any}
         initialValues={{
-          tripId: initialTripId,
-          city: editingLocation?.city || '',
-          date: editingLocation?.date || '',
-          description: editingLocation?.description || '',
-          lat: editingLocation?.lat?.toString() || '',
-          lng: editingLocation?.lng?.toString() || '',
-          tags: editingLocation?.tags || [],
-          photo: editingLocation?.photo || '',
+          tripId: trips[0]?.id ?? '__new__',
+          city: '',
+          date: '',
+          description: '',
+          tags: [],
+          photo: '',
           tripName: '',
           tripDate: '',
           tripColor: 'app-pink' as TripColor,
@@ -107,6 +122,39 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         layout="vertical"
         onFinish={handleFinish as any}
       >
+        {/* 地图选点 */}
+        <div style={{
+          background: hasCoords ? '#e6f9f6' : '#f0ece2',
+          borderRadius: 16,
+          padding: hasCoords ? '10px 16px' : '14px 16px',
+          marginBottom: 16,
+          textAlign: 'center',
+          border: hasCoords ? '2px solid #19c8b9' : '2px dashed #c4b89e',
+          transition: 'all 0.2s ease',
+        }}>
+          {hasCoords ? (
+            <div>
+              <span style={{ fontSize: 24 }}>📍</span>
+              <div style={{ fontSize: 12, color: '#9f927d', marginTop: 4 }}>
+                已标记位置 ({pickedLat?.toFixed(4)}, {pickedLng?.toFixed(4)})
+              </div>
+              <div style={{ fontSize: 11, color: '#19c8b9', marginTop: 2, fontWeight: 600 }}>
+                点击地图其他位置可以修改
+              </div>
+            </div>
+          ) : (
+            <div>
+              <span style={{ fontSize: 24 }}>👆</span>
+              <div style={{ fontSize: 13, color: '#9f927d', marginTop: 4, fontWeight: 600 }}>
+                点击地图标记位置
+              </div>
+              <div style={{ fontSize: 11, color: '#c4b89e', marginTop: 2 }}>
+                在左侧地图上点击你去过的地方
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* 所属旅行 */}
         <FormItem label="所属旅行" name="tripId" rules={[{ required: true, message: '请选择旅行' }]}>
           <Select
@@ -119,54 +167,45 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
           />
         </FormItem>
 
-        {/* 新建旅行时显示额外字段 */}
+        {/* 新建旅行字段 */}
         {isNewTrip && (
           <>
-            <FormItem label="旅行名称" name="tripName" rules={[{ required: true, message: '请输入旅行名称' }]}>
+            <FormItem label="旅行名称" name="tripName" rules={[{ required: true, message: '请输入' }]}>
               <Input placeholder="例如：杭州之旅" />
             </FormItem>
-
-            <FormItem label="旅行日期" name="tripDate" rules={[{ required: true, message: '请输入旅行日期' }]}>
-              <Input placeholder="例如：2025-03" />
-            </FormItem>
-
-            <FormItem label="路线颜色" name="tripColor">
-              <Select
-                options={colorOptions}
-                value={form.getFieldValue('tripColor') as string}
-                onChange={v => form.setFieldValue('tripColor', v as TripColor)}
-              />
-            </FormItem>
+            <div style={{ display: 'flex', gap: 12 }}>
+              <div style={{ flex: 1 }}>
+                <FormItem label="旅行日期" name="tripDate" rules={[{ required: true, message: '请输入' }]}>
+                  <Input placeholder="2025-03" />
+                </FormItem>
+              </div>
+              <div style={{ flex: 1 }}>
+                <FormItem label="路线颜色" name="tripColor">
+                  <Select
+                    options={colorOptions}
+                    value={form.getFieldValue('tripColor') as string}
+                    onChange={v => form.setFieldValue('tripColor', v as TripColor)}
+                  />
+                </FormItem>
+              </div>
+            </div>
           </>
         )}
 
         {/* 地点信息 */}
-        <FormItem label="城市名" name="city" rules={[{ required: true, message: '请输入城市名' }]}>
-          <Input placeholder="例如：杭州" />
+        <FormItem label="城市" name="city" rules={[{ required: true, message: '请输入城市名' }]}>
+          <Input placeholder="杭州" />
         </FormItem>
 
         <FormItem label="日期" name="date" rules={[{ required: true, message: '请输入日期' }]}>
-          <Input placeholder="例如：2025-03-15" />
+          <Input placeholder="2025-03-15" />
         </FormItem>
 
-        <div style={{ display: 'flex', gap: 12 }}>
-          <div style={{ flex: 1 }}>
-            <FormItem label="纬度" name="lat" rules={[{ required: true, message: '请输入纬度' }]}>
-              <Input placeholder="例如：30.2741" />
-            </FormItem>
-          </div>
-          <div style={{ flex: 1 }}>
-            <FormItem label="经度" name="lng" rules={[{ required: true, message: '请输入经度' }]}>
-              <Input placeholder="例如：120.1551" />
-            </FormItem>
-          </div>
-        </div>
-
-        <FormItem label="描述" name="description" rules={[{ required: true, message: '请输入描述' }]}>
+        <FormItem label="回忆" name="description" rules={[{ required: true, message: '写点什么吧' }]}>
           <Input placeholder="一起做了什么..." />
         </FormItem>
 
-        {/* 标签 */}
+        {/* 标签选择 */}
         <FormItem label="标签" name="tags">
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
             {tagOptions.map(tag => {
@@ -182,7 +221,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
                     form.setFieldValue('tags', next);
                   }}
                   style={{
-                    padding: '3px 12px',
+                    padding: '4px 12px',
                     borderRadius: 999,
                     fontSize: 12,
                     fontWeight: 600,
@@ -200,7 +239,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
           </div>
         </FormItem>
 
-        <FormItem label="照片 URL" name="photo">
+        <FormItem label="照片链接" name="photo">
           <Input placeholder="https://..." />
         </FormItem>
 
@@ -208,7 +247,6 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
           <Button type="primary" htmlType="submit" block>保存</Button>
         </FormItem>
       </Form>
-      </div>
-    </Modal>
+    </Drawer>
   );
 }

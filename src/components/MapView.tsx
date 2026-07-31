@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from 'react';
-import { MapContainer, TileLayer, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import type { Trip, Location } from '../types';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, GAODE_TILE_URL } from '../constants';
@@ -11,6 +11,18 @@ interface MapViewProps {
   selectedLocation: Location | null;
   onSelectLocation: (loc: Location) => void;
   flyToTripId: string | null;
+  onMapClick: ((lat: number, lng: number) => void) | null;
+}
+
+function MapClickHandler({ onMapClick }: { onMapClick: ((lat: number, lng: number) => void) | null }) {
+  useMapEvents({
+    click(e) {
+      if (onMapClick) {
+        onMapClick(e.latlng.lat, e.latlng.lng);
+      }
+    },
+  });
+  return null;
 }
 
 function FitBounds({ trips }: { trips: Trip[] }) {
@@ -45,7 +57,7 @@ function FlyToTrip({ trips, flyToTripId }: { trips: Trip[]; flyToTripId: string 
   return null;
 }
 
-export default function MapView({ trips, selectedLocation, onSelectLocation, flyToTripId }: MapViewProps) {
+export default function MapView({ trips, selectedLocation, onSelectLocation, flyToTripId, onMapClick }: MapViewProps) {
   const allLocations = useMemo(
     () => trips.flatMap(t => t.locations),
     [trips]
@@ -55,7 +67,7 @@ export default function MapView({ trips, selectedLocation, onSelectLocation, fly
     <MapContainer
       center={DEFAULT_CENTER}
       zoom={DEFAULT_ZOOM}
-      style={{ width: '100%', height: '100%' }}
+      style={{ width: '100%', height: '100%', cursor: onMapClick ? 'crosshair' : undefined }}
       zoomControl={false}
     >
       <TileLayer
@@ -63,6 +75,7 @@ export default function MapView({ trips, selectedLocation, onSelectLocation, fly
         subdomains={['1', '2', '3', '4']}
         attribution='&copy; 高德地图'
       />
+      <MapClickHandler onMapClick={onMapClick} />
       <FitBounds trips={trips} />
       <FlyToTrip trips={trips} flyToTripId={flyToTripId} />
       <TripPolylines trips={trips} />
