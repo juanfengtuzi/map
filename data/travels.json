@@ -21,10 +21,10 @@
       ]
     },
     {
-      "id": "4cbeb6af-20f8-40a8-932c-78db60df2f40",
+      "id": "d65322cc-a2ae-426b-b880-b7c5483f9ce0",
       "name": "北京之旅",
       "date": "2024-09",
-      "color": "app-pink",
+      "color": "purple",
       "locations": [
         {
           "city": "北京",
@@ -32,9 +32,13 @@
           "description": "一起上学",
           "lat": 39.9057,
           "lng": 116.3913,
-          "tags": "上学",
+          "tags": [
+            "上",
+            "学",
+            "自然风光"
+          ],
           "photo": "",
-          "id": "e4d6bb5f-bf8f-40dc-a324-b762d3870274"
+          "id": "cc6adf5c-b513-4f9f-9e60-e6bd39caba2a"
         }
       ]
     }
