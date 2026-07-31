@@ -1,3 +1,22 @@
 {
-  "trips": []
+  "trips": [
+    {
+      "id": "5b34dcbe-5b70-490c-8884-3e283013d4fb",
+      "name": "青岛之旅",
+      "date": "2025-04",
+      "color": "app-pink",
+      "locations": [
+        {
+          "city": "小麦岛",
+          "date": "2025-06-27",
+          "description": "一起去小麦岛",
+          "lat": 36.0661,
+          "lng": 120.4187,
+          "tags": [],
+          "photo": "",
+          "id": "b55a6375-8c1f-4295-8fa1-88aa1ee18706"
+        }
+      ]
+    }
+  ]
 }
