@@ -32,8 +32,14 @@ export function useTravelsData(token: string | null) {
   useEffect(() => { refresh(); }, [refresh]);
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
-    await saveData({ trips: newTrips });   // save first
-    setTrips(newTrips);                     // update state only on success
+    const prev = tripsRef.current;
+    setTrips(newTrips);                      // 乐观更新 — 立即响应
+    try {
+      await saveData({ trips: newTrips });   // 后台同步
+    } catch {
+      setTrips(prev);                        // 失败回滚
+      throw new Error('保存失败，已还原');     // 继续抛出让上层显示通知
+    }
   }, [saveData]);
 
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
