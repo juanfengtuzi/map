@@ -1,11 +1,3 @@
 {
-  "trips": [
-    {
-      "name": "",
-      "date": "",
-      "color": "app-pink",
-      "id": "41be9ab0-3d16-4b94-9c54-115d97986bf7",
-      "locations": []
-    }
-  ]
+  "trips": []
 }
