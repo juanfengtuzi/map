@@ -23,7 +23,8 @@ export function useTravelsData(token: string | null) {
     try {
       const data: TravelsData = await fetchData();
       setTrips(data.trips);
-    } catch {
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '加载数据失败');
       if (tripsRef.current.length === 0) {
         setTrips((sampleData as TravelsData).trips);
       }
@@ -45,6 +46,7 @@ export function useTravelsData(token: string | null) {
     } catch {
       // Only rollback if no newer persistTrips call was made in the meantime
       if (saveGenRef.current <= gen) {
+        saveGenRef.current = gen - 1;
         tripsRef.current = prev;
         setTrips(prev);
       }

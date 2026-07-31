@@ -13,10 +13,23 @@ interface LocationFormProps {
   onClose: () => void;
 }
 
+interface LocationFormValues {
+  tripId: string;
+  city: string;
+  date: string;
+  description: string;
+  lat: string;
+  lng: string;
+  tags: string[];
+  tripName: string;
+  tripDate: string;
+  tripColor: TripColor;
+}
+
 const PRESET_TAGS = ['自然风光', '美食', '城市漫步', '历史文化', '海边', '山野'];
 
 export default function LocationForm({ open, trips, editingLocation, onSubmit, onSubmitWithNewTrip, onUploadPhoto, onClose }: LocationFormProps) {
-  const [form] = useForm<Record<string, unknown>>();
+  const [form] = useForm<LocationFormValues>();
   const [showNewTrip, setShowNewTrip] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [photoPreview, setPhotoPreview] = useState<string>('');
@@ -71,7 +84,11 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         canvas.width = w; canvas.height = h;
         const ctx = canvas.getContext('2d')!;
         ctx.drawImage(img, 0, 0, w, h);
-        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+        let compressed = canvas.toDataURL('image/jpeg', 0.7);
+        // 压缩后仍超过 500KB → 再降质量
+        if (compressed.length > 500 * 1024) {
+          compressed = canvas.toDataURL('image/jpeg', 0.4);
+        }
         setPhotoPreview(compressed);
         setPhotoDataUrl(compressed);
         setPhotoRemoved(false);
@@ -100,11 +117,11 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     setTagInput('');
   }
 
-  const handleFinish = useCallback(async (values: Record<string, unknown>) => {
+  const handleFinish = useCallback(async (values: LocationFormValues) => {
     setSubmitting(true);
     try {
-      const lat = parseFloat(String(values.lat));
-      const lng = parseFloat(String(values.lng));
+      const lat = parseFloat(values.lat);
+      const lng = parseFloat(values.lng);
       if (isNaN(lat) || isNaN(lng)) {
         Notification.warning({ message: '坐标无效', description: '请输入有效的经纬度数字' });
         setSubmitting(false);
@@ -296,7 +313,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         </div>
 
         {/* ====== 标签 ====== */}
-        <FormItem label="标签">
+        <FormItem label="标签" name="tags">
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, alignItems: 'center' }}>
             {allTags.map(tag => {
               const active = currentTags.includes(tag);
