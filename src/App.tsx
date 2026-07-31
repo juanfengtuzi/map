@@ -8,14 +8,13 @@ import LocationForm from './components/LocationForm';
 import { useAuth } from './hooks/useAuth';
 import { useTravelsData } from './hooks/useTravelsData';
 import type { Location, TripColor } from './types';
-import { v4 as uuidv4 } from 'uuid';
 
 export default function App() {
   const { token, isAuthed, setToken, clearToken, showAuthModal, setShowAuthModal } = useAuth();
   const {
     trips, loading, error,
     selectedLocation, setSelectedLocation,
-    addLocation, updateLocation, deleteLocation, addTrip,
+    addLocation, updateLocation, deleteLocation, addTripWithLocation,
   } = useTravelsData(token);
 
   const [showForm, setShowForm] = useState(false);
@@ -69,12 +68,17 @@ export default function App() {
     }
   }, [editingLocation, addLocation, updateLocation]);
 
-  const handleAddTrip = useCallback(async (trip: { name: string; date: string; color: TripColor }): Promise<string> => {
-    const id = uuidv4();
-    await addTrip({ ...trip, id, locations: [] });
-    Notification.success({ message: '已创建', description: `${trip.name} 已创建` });
-    return id;
-  }, [addTrip]);
+  const handleSubmitWithNewTrip = useCallback(async (
+    trip: { name: string; date: string; color: TripColor },
+    location: Omit<Location, 'id'>,
+  ) => {
+    try {
+      await addTripWithLocation(trip, location);
+      Notification.success({ message: '已添加', description: `${trip.name} - ${location.city} 已加入旅行地图` });
+    } catch (e) {
+      Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
+    }
+  }, [addTripWithLocation]);
 
   if (loading) {
     return <Loading active />;
@@ -193,7 +197,7 @@ export default function App() {
         trips={trips}
         editingLocation={editingLocation}
         onSubmit={handleFormSubmit}
-        onAddTrip={handleAddTrip}
+        onSubmitWithNewTrip={handleSubmitWithNewTrip}
         onClose={() => {
           setShowForm(false);
           setEditingLocation(null);

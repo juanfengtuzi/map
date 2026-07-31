@@ -22,13 +22,13 @@ interface LocationFormProps {
   trips: Trip[];
   editingLocation: Location | null;
   onSubmit: (tripId: string, location: Omit<Location, 'id'>) => void;
-  onAddTrip: (trip: { name: string; date: string; color: TripColor }) => Promise<string>;
+  onSubmitWithNewTrip: (trip: { name: string; date: string; color: TripColor }, location: Omit<Location, 'id'>) => void;
   onClose: () => void;
 }
 
 const TAG_OPTIONS = ['自然风光', '美食', '城市漫步', '历史文化', '海边', '山野'];
 
-export default function LocationForm({ open, trips, editingLocation, onSubmit, onAddTrip, onClose }: LocationFormProps) {
+export default function LocationForm({ open, trips, editingLocation, onSubmit, onSubmitWithNewTrip, onClose }: LocationFormProps) {
   const [form] = useForm<LocationFormValues>();
   const [showNewTrip, setShowNewTrip] = useState(false);
   const [, setPhotoFile] = useState<File | null>(null);
@@ -56,17 +56,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
 
   const handleFinish = useCallback(async (values: LocationFormValues) => {
     try {
-      let targetTripId = values.tripId;
-
-      if (values.tripId === '__new__') {
-        targetTripId = await onAddTrip({
-          name: values.tripName,
-          date: values.tripDate,
-          color: values.tripColor,
-        });
-      }
-
-      await onSubmit(targetTripId, {
+      const location: Omit<Location, 'id'> = {
         city: values.city,
         date: values.date,
         description: values.description,
@@ -74,7 +64,18 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         lng: parseFloat(values.lng),
         tags: values.tags || [],
         photo: values.photo || '',
-      });
+      };
+
+      if (values.tripId === '__new__') {
+        await onSubmitWithNewTrip({
+          name: values.tripName,
+          date: values.tripDate,
+          color: values.tripColor,
+        }, location);
+      } else {
+        await onSubmit(values.tripId, location);
+      }
+
       form.resetFields();
       setShowNewTrip(false);
       setPhotoFile(null);
@@ -83,7 +84,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     } catch (e) {
       Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
     }
-  }, [onSubmit, onAddTrip, form, onClose]);
+  }, [onSubmit, onSubmitWithNewTrip, form, onClose]);
 
   const currentTripId = form.getFieldValue('tripId') as string;
   const currentTags = (form.getFieldValue('tags') as string[]) || [];

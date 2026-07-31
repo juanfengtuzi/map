@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { TravelsData, Trip, Location } from '../types';
 import { useGitHubApi } from './useGitHubApi';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,6 +12,10 @@ export function useTravelsData(token: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const tripsRef = useRef<Trip[]>([]);
+
+  // Keep ref in sync
+  useEffect(() => { tripsRef.current = trips; }, [trips]);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -20,16 +24,13 @@ export function useTravelsData(token: string | null) {
       const data: TravelsData = token ? await fetchData() : await publicFetch();
       setTrips(data.trips);
     } catch {
-      // 远程获取失败时使用本地示例数据
       setTrips((sampleData as TravelsData).trips);
     } finally {
       setLoading(false);
     }
   }, [token, fetchData, publicFetch]);
 
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
+  useEffect(() => { refresh(); }, [refresh]);
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
     setTrips(newTrips);
@@ -37,44 +38,62 @@ export function useTravelsData(token: string | null) {
   }, [saveData]);
 
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
-    const newTrips = trips.map(trip => {
+    const current = tripsRef.current;
+    const newTrips = current.map(trip => {
       if (trip.id !== tripId) return trip;
-      return {
-        ...trip,
-        locations: [...trip.locations, { ...loc, id: uuidv4() }],
-      };
+      return { ...trip, locations: [...trip.locations, { ...loc, id: uuidv4() }] };
     });
     await persistTrips(newTrips);
-  }, [trips, persistTrips]);
+  }, [persistTrips]);
 
   const updateLocation = useCallback(async (locationId: string, updates: Partial<Location>) => {
-    const newTrips = trips.map(trip => ({
+    const current = tripsRef.current;
+    const newTrips = current.map(trip => ({
       ...trip,
       locations: trip.locations.map(loc =>
         loc.id === locationId ? { ...loc, ...updates } : loc
       ),
     }));
     await persistTrips(newTrips);
-  }, [trips, persistTrips]);
+  }, [persistTrips]);
 
   const deleteLocation = useCallback(async (locationId: string) => {
-    const newTrips = trips
+    const current = tripsRef.current;
+    const newTrips = current
       .map(trip => ({
         ...trip,
         locations: trip.locations.filter(loc => loc.id !== locationId),
       }))
       .filter(trip => trip.locations.length > 0);
     await persistTrips(newTrips);
-  }, [trips, persistTrips]);
+  }, [persistTrips]);
 
   const addTrip = useCallback(async (trip: Trip) => {
-    const newTrips = [...trips, trip];
+    const current = tripsRef.current;
+    const newTrips = [...current, trip];
     await persistTrips(newTrips);
-  }, [trips, persistTrips]);
+  }, [persistTrips]);
+
+  // 原子操作：新建旅行 + 添加第一个地点
+  const addTripWithLocation = useCallback(async (
+    trip: { name: string; date: string; color: Trip['color'] },
+    location: Omit<Location, 'id'>
+  ) => {
+    const current = tripsRef.current;
+    const newTrip: Trip = {
+      id: uuidv4(),
+      name: trip.name,
+      date: trip.date,
+      color: trip.color,
+      locations: [{ ...location, id: uuidv4() }],
+    };
+    const newTrips = [...current, newTrip];
+    await persistTrips(newTrips);
+  }, [persistTrips]);
 
   return {
     trips, loading, error,
     selectedLocation, setSelectedLocation,
-    addLocation, updateLocation, deleteLocation, addTrip, refresh,
+    addLocation, updateLocation, deleteLocation, addTrip, addTripWithLocation, refresh,
   };
 }
