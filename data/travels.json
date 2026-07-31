@@ -1,3 +1,11 @@
 {
-  "trips": []
+  "trips": [
+    {
+      "name": "青岛之旅",
+      "date": "2025-04",
+      "color": "app-pink",
+      "id": "b893a38e-448d-482c-8e40-f0a60b3c0f6e",
+      "locations": []
+    }
+  ]
 }
