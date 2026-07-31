@@ -19,26 +19,6 @@
           "id": "7ac921a1-b9a0-4ab0-91bd-520750321b79"
         }
       ]
-    },
-    {
-      "id": "29263835-bcb0-4d85-9ce2-9ac0a9a5c61d",
-      "name": "北京之旅",
-      "date": "2025-06",
-      "color": "purple",
-      "locations": [
-        {
-          "city": "北京",
-          "date": "2025-06-27",
-          "description": "一起上学",
-          "lat": 39.906217,
-          "lng": 116.3912757,
-          "tags": [
-            "城市漫步"
-          ],
-          "photo": "https://raw.githubusercontent.com/juanfengtuzi/map/main/data/photos/4933c183-19ab-4abd-8f46-32e7764f2d49.jpg",
-          "id": "3c28928d-5b70-4629-9174-a7fe7fbf589c"
-        }
-      ]
     }
   ]
 }
