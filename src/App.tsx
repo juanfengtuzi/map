@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Cursor, Title, Footer, Button, Loading, Notification, Divider, Tag } from 'animal-island-ui';
+import { Title, Footer, Button, Loading, Notification, Divider, Tag } from 'animal-island-ui';
 import MapView from './components/MapView';
 import Timeline from './components/Timeline';
 import DetailDrawer from './components/DetailDrawer';
@@ -86,7 +86,7 @@ export default function App() {
   }
 
   return (
-    <Cursor>
+    <>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
 
         {/* 顶部横幅 — 居中、留白、标题即主角 */}
@@ -189,7 +189,9 @@ export default function App() {
 
       <AuthModal
         open={showAuthModal}
+        token={token}
         onSetToken={setToken}
+        onClearToken={clearToken}
         onClose={() => setShowAuthModal(false)}
       />
 
@@ -205,6 +207,6 @@ export default function App() {
           setEditingLocation(null);
         }}
       />
-    </Cursor>
+    </>
   );
 }
