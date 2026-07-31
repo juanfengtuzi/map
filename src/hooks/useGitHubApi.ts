@@ -17,9 +17,11 @@ export function useGitHubApi(token: string | null) {
         });
         if (apiRes.ok) {
           const fileInfo = await apiRes.json();
-          // Content API 返回 base64 编码的内容
-          const decoded = atob(fileInfo.content);
-          return JSON.parse(decoded);
+          // Content API 返回 base64，需正确处理 UTF-8
+          const binary = atob(fileInfo.content);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+          return JSON.parse(new TextDecoder().decode(bytes));
         }
       } catch { /* fall through to raw URL */ }
     }
