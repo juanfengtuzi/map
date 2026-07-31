@@ -32,6 +32,7 @@ export default function App() {
   }, []);
 
   const handleEdit = useCallback((loc: Location) => {
+    setSelectedLocation(null);  // Close detail drawer before opening edit form
     setEditingLocation(loc);
     setShowForm(true);
   }, []);

@@ -1,4 +1,4 @@
-import { useCallback, useState, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import { Drawer, Form, FormItem, Input, Button, useForm, Notification } from 'animal-island-ui';
 import type { Trip, Location, TripColor } from '../types';
 import { TRIP_COLOR_HEX, TRIP_COLORS } from '../constants';
@@ -31,8 +31,10 @@ const TAG_OPTIONS = ['自然风光', '美食', '城市漫步', '历史文化', '
 export default function LocationForm({ open, trips, editingLocation, onSubmit, onSubmitWithNewTrip, onClose }: LocationFormProps) {
   const [form] = useForm<LocationFormValues>();
   const [showNewTrip, setShowNewTrip] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>('');
+  const [photoRemoved, setPhotoRemoved] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = editingLocation !== null;
@@ -44,6 +46,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
       Notification.warning({ message: '图片太大', description: '请选择小于 500KB 的图片' });
       return;
     }
+    setPhotoRemoved(false);
     setPhotoFile(file);
     const reader = new FileReader();
     reader.onload = () => {
@@ -55,13 +58,21 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
   }
 
   const handleFinish = useCallback(async (values: LocationFormValues) => {
+    setSubmitting(true);
     try {
+      const lat = parseFloat(values.lat);
+      const lng = parseFloat(values.lng);
+      if (isNaN(lat) || isNaN(lng)) {
+        Notification.warning({ message: '坐标无效', description: '请输入有效的经纬度数字' });
+        return;
+      }
+
       const location: Omit<Location, 'id'> = {
         city: values.city,
         date: values.date,
         description: values.description,
-        lat: parseFloat(values.lat),
-        lng: parseFloat(values.lng),
+        lat,
+        lng,
         tags: values.tags || [],
         photo: values.photo || '',
       };
@@ -80,11 +91,30 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
       setShowNewTrip(false);
       setPhotoFile(null);
       setPhotoPreview('');
+      setPhotoRemoved(false);
       onClose();
     } catch (e) {
       Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
+    } finally {
+      setSubmitting(false);
     }
   }, [onSubmit, onSubmitWithNewTrip, form, onClose]);
+
+  // Re-initialize form fields when opening in edit mode
+  useEffect(() => {
+    if (open && editingLocation) {
+      form.setFieldsValue({
+        city: editingLocation.city,
+        date: editingLocation.date,
+        description: editingLocation.description,
+        lat: editingLocation.lat.toString(),
+        lng: editingLocation.lng.toString(),
+        tags: editingLocation.tags,
+        photo: editingLocation.photo,
+        tripId: trips.find(t => t.locations.some(l => l.id === editingLocation.id))?.id || '__new__',
+      });
+    }
+  }, [open, editingLocation, trips, form]);
 
   const currentTripId = form.getFieldValue('tripId') as string;
   const currentTags = (form.getFieldValue('tags') as string[]) || [];
@@ -96,6 +126,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
 
   return (
     <Drawer
+      key={editingLocation?.id || 'new'}
       open={open}
       title={isEditing ? `编辑 - ${editingLocation.city}` : '新增旅行记忆'}
       placement="right"
@@ -105,6 +136,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         setShowNewTrip(false);
         setPhotoFile(null);
         setPhotoPreview('');
+        setPhotoRemoved(false);
         onClose();
       }}
     >
@@ -231,12 +263,12 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         {/* 经纬度 */}
         <div style={{ display: 'flex', gap: 10 }}>
           <div style={{ flex: 1 }}>
-            <FormItem label="纬度" name="lat" rules={[{ required: true, message: '必填' }]}>
+            <FormItem label="纬度" name="lat" rules={[{ required: true, message: '必填' }, { type: 'number', message: '请输入数字' }, { validator: (_rule, value) => { const v = parseFloat(String(value)); if (isNaN(v)) return Promise.reject('请输入有效数字'); if (v < -90 || v > 90) return Promise.reject('纬度范围 -90 到 90'); return Promise.resolve(); } }]}>
               <Input placeholder="30.2741" />
             </FormItem>
           </div>
           <div style={{ flex: 1 }}>
-            <FormItem label="经度" name="lng" rules={[{ required: true, message: '必填' }]}>
+            <FormItem label="经度" name="lng" rules={[{ required: true, message: '必填' }, { type: 'number', message: '请输入数字' }, { validator: (_rule, value) => { const v = parseFloat(String(value)); if (isNaN(v)) return Promise.reject('请输入有效数字'); if (v < -180 || v > 180) return Promise.reject('经度范围 -180 到 180'); return Promise.resolve(); } }]}>
               <Input placeholder="120.1551" />
             </FormItem>
           </div>
@@ -281,7 +313,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         {/* ====== 4. 照片上传 ====== */}
         <FormItem label="照片" name="photo">
           <div>
-            {photoPreview || (editingLocation?.photo) ? (
+            {!photoRemoved && (photoPreview || editingLocation?.photo) ? (
               <div style={{ marginBottom: 8 }}>
                 <img
                   src={photoPreview || editingLocation?.photo || ''}
@@ -301,10 +333,11 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
               <Button type="dashed" size="small" onClick={() => fileInputRef.current?.click()}>
                 选择图片
               </Button>
-              {(photoPreview || editingLocation?.photo) && (
+              {!photoRemoved && (photoPreview || editingLocation?.photo) && (
                 <Button type="text" size="small" danger onClick={() => {
                   setPhotoFile(null);
                   setPhotoPreview('');
+                  setPhotoRemoved(true);
                   form.setFieldValue('photo', '');
                 }}>
                   移除
@@ -318,7 +351,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
         </FormItem>
 
         <FormItem>
-          <Button type="primary" htmlType="submit" block>保存记忆</Button>
+          <Button type="primary" htmlType="submit" block loading={submitting} disabled={submitting}>保存记忆</Button>
         </FormItem>
       </Form>
     </Drawer>
