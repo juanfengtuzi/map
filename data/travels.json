@@ -1,0 +1,22 @@
+{
+  "trips": [
+    {
+      "id": "trip-001",
+      "name": "杭州之旅",
+      "date": "2025-03",
+      "color": "app-pink",
+      "locations": [
+        {
+          "id": "loc-001",
+          "city": "杭州",
+          "lat": 30.2741,
+          "lng": 120.1551,
+          "date": "2025-03-15",
+          "description": "一起在西湖边看日落",
+          "tags": ["自然风光"],
+          "photo": ""
+        }
+      ]
+    }
+  ]
+}
