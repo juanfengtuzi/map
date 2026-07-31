@@ -11,6 +11,8 @@ export function useTravelsData(token: string | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [dirty, setDirty] = useState(false);       // 有未同步的本地修改
+  const [syncing, setSyncing] = useState(false);    // 正在同步到 GitHub
   const tripsRef = useRef<Trip[]>([]);
 
   // Keep ref in sync
@@ -22,6 +24,7 @@ export function useTravelsData(token: string | null) {
     try {
       const data: TravelsData = await fetchData();
       setTrips(data.trips);
+      setDirty(false);
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载数据失败');
       if (tripsRef.current.length === 0) {
@@ -32,120 +35,94 @@ export function useTravelsData(token: string | null) {
     }
   }, [fetchData]);
 
-  // 仅在首次加载时拉取数据，token 变化不重新拉取
-  useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { refresh(); }, []); // eslint-disable-line
 
-  const persistTrips = useCallback(async (newTrips: Trip[]) => {
-    const prev = tripsRef.current;
+  // ===== 本地修改（不触发 API） =====
+  const updateLocalTrips = useCallback((newTrips: Trip[]) => {
     tripsRef.current = newTrips;
     setTrips(newTrips);
-    try {
-      await saveData({ trips: newTrips });
-      // 保存成功后稍等片刻重新拉取，确保和 GitHub 同步
-      setTimeout(() => {
-        fetchData().then(data => {
-          tripsRef.current = data.trips;
-          setTrips(data.trips);
-        }).catch((e) => {
-          console.error('保存后同步拉取失败:', e);
-        });
-      }, 2000);
-    } catch (e) {
-      tripsRef.current = prev;
-      setTrips(prev);
-      throw new Error(e instanceof Error ? e.message : '保存失败，已还原');
-    }
-  }, [saveData, fetchData]);
+    setDirty(true);
+  }, []);
 
+  // ===== 一次性同步到 GitHub =====
+  const syncToGitHub = useCallback(async () => {
+    if (!dirty) return;
+    setSyncing(true);
+    try {
+      await saveData({ trips: tripsRef.current });
+      setDirty(false);
+    } catch (e) {
+      throw new Error(e instanceof Error ? e.message : '同步失败');
+    } finally {
+      setSyncing(false);
+    }
+  }, [dirty, saveData]);
+
+  // ===== CRUD（仅本地） =====
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
     const current = tripsRef.current;
     const newTrips = current.map(trip => {
       if (trip.id !== tripId) return trip;
       return { ...trip, locations: [...trip.locations, { ...loc, id: uuidv4() }] };
     });
-    await persistTrips(newTrips);
-  }, [persistTrips]);
+    updateLocalTrips(newTrips);
+  }, [updateLocalTrips]);
 
   const updateLocation = useCallback(async (locationId: string, updates: Partial<Location>, newTripId?: string) => {
     const current = tripsRef.current;
-
-    // Resolve location + current trip
     let oldTrip: Trip | undefined;
     let oldLocation: Location | undefined;
     for (const t of current) {
       const loc = t.locations.find(l => l.id === locationId);
       if (loc) { oldTrip = t; oldLocation = loc; break; }
     }
-    if (!oldTrip || !oldLocation) {
-      // Location not found (possibly stale ref after rapid operations); refuse silently
-      return;
-    }
+    if (!oldTrip || !oldLocation) return;
 
     const updatedLocation: Location = { ...oldLocation, ...updates };
     const effectiveNewTripId = newTripId || oldTrip.id;
 
+    let newTrips: Trip[];
     if (effectiveNewTripId !== oldTrip.id) {
-      // Moving location to a different trip
-      const newTrips = current
+      newTrips = current
         .map(trip => {
-          if (trip.id === oldTrip!.id) {
-            return { ...trip, locations: trip.locations.filter(l => l.id !== locationId) };
-          }
-          if (trip.id === effectiveNewTripId) {
-            return { ...trip, locations: [...trip.locations, updatedLocation] };
-          }
+          if (trip.id === oldTrip!.id) return { ...trip, locations: trip.locations.filter(l => l.id !== locationId) };
+          if (trip.id === effectiveNewTripId) return { ...trip, locations: [...trip.locations, updatedLocation] };
           return trip;
         })
         .filter(trip => trip.locations.length > 0);
-      await persistTrips(newTrips);
     } else {
-      const newTrips = current.map(trip => ({
+      newTrips = current.map(trip => ({
         ...trip,
-        locations: trip.locations.map(loc =>
-          loc.id === locationId ? updatedLocation : loc
-        ),
+        locations: trip.locations.map(loc => loc.id === locationId ? updatedLocation : loc),
       }));
-      await persistTrips(newTrips);
     }
-  }, [persistTrips]);
+    updateLocalTrips(newTrips);
+  }, [updateLocalTrips]);
 
   const deleteLocation = useCallback(async (locationId: string) => {
     const current = tripsRef.current;
     const newTrips = current
-      .map(trip => ({
-        ...trip,
-        locations: trip.locations.filter(loc => loc.id !== locationId),
-      }))
+      .map(trip => ({ ...trip, locations: trip.locations.filter(loc => loc.id !== locationId) }))
       .filter(trip => trip.locations.length > 0);
-    await persistTrips(newTrips);
-  }, [persistTrips]);
+    updateLocalTrips(newTrips);
+  }, [updateLocalTrips]);
 
-  const addTrip = useCallback(async (trip: Trip) => {
-    const current = tripsRef.current;
-    const newTrips = [...current, trip];
-    await persistTrips(newTrips);
-  }, [persistTrips]);
-
-  // 原子操作：新建旅行 + 添加第一个地点
   const addTripWithLocation = useCallback(async (
     trip: { name: string; date: string; color: Trip['color'] },
     location: Omit<Location, 'id'>
   ) => {
     const current = tripsRef.current;
     const newTrip: Trip = {
-      id: uuidv4(),
-      name: trip.name,
-      date: trip.date,
-      color: trip.color,
+      id: uuidv4(), name: trip.name, date: trip.date, color: trip.color,
       locations: [{ ...location, id: uuidv4() }],
     };
-    const newTrips = [...current, newTrip];
-    await persistTrips(newTrips);
-  }, [persistTrips]);
+    updateLocalTrips([...current, newTrip]);
+  }, [updateLocalTrips]);
 
   return {
-    trips, loading, error,
+    trips, loading, error, dirty, syncing,
     selectedLocation, setSelectedLocation,
-    addLocation, updateLocation, deleteLocation, addTrip, addTripWithLocation, uploadPhoto, refresh,
+    addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto,
+    syncToGitHub, refresh,
   };
 }

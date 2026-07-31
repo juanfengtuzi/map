@@ -11,7 +11,7 @@ import type { Location, TripColor } from './types';
 
 export default function App() {
   const { token, isAuthed, setToken, clearToken, showAuthModal, setShowAuthModal } = useAuth();
-  const { trips, loading, error, selectedLocation, setSelectedLocation, addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto } = useTravelsData(token);
+  const { trips, loading, error, dirty, syncing, selectedLocation, setSelectedLocation, addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto, syncToGitHub } = useTravelsData(token);
 
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
@@ -32,6 +32,17 @@ export default function App() {
   }, [deleteLocation, setSelectedLocation]);
 
   const handleAddNew = useCallback(() => { setEditingLocation(null); setShowForm(true); }, []);
+
+  const handleLogout = useCallback(async () => {
+    try {
+      await syncToGitHub();
+      Notification.success({ message: '已同步', description: '所有修改已保存到 GitHub' });
+    } catch (e) {
+      Notification.error({ message: '同步失败', description: e instanceof Error ? e.message : '请重试' });
+      return;
+    }
+    clearToken();
+  }, [syncToGitHub, clearToken]);
 
   const handleFormSubmit = useCallback(async (tripId: string, location: Omit<Location, 'id'>) => {
     try {
@@ -77,7 +88,9 @@ export default function App() {
         {isAuthed ? (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Button type="primary" size="middle" onClick={handleAddNew} style={{ minWidth: 44, minHeight: 44 }}>+ 新增地点</Button>
-            <Button type="text" size="small" onClick={clearToken}>退出</Button>
+            <Button type="text" size="small" onClick={handleLogout} loading={syncing} disabled={syncing}>
+              {syncing ? '同步中...' : dirty ? '保存并退出' : '退出'}
+            </Button>
           </div>
         ) : (
           <Button type="dashed" size="middle" onClick={() => setShowAuthModal(true)} style={{ minWidth: 44, minHeight: 44 }}>管理</Button>
