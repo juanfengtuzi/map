@@ -63,9 +63,9 @@ export default function App() {
     }
   }, [editingLocation, addLocation, updateLocation]);
 
-  const handleAddTrip = useCallback((trip: { name: string; date: string; color: TripColor }): string => {
+  const handleAddTrip = useCallback(async (trip: { name: string; date: string; color: TripColor }): Promise<string> => {
     const id = uuidv4();
-    addTrip({ ...trip, id, locations: [] });
+    await addTrip({ ...trip, id, locations: [] });
     return id;
   }, [addTrip]);
 

@@ -22,7 +22,7 @@ interface LocationFormProps {
   trips: Trip[];
   editingLocation: Location | null;
   onSubmit: (tripId: string, location: Omit<Location, 'id'>, tripInfo?: { name: string; date: string; color: TripColor }) => void;
-  onAddTrip: (trip: { name: string; date: string; color: TripColor }) => string;
+  onAddTrip: (trip: { name: string; date: string; color: TripColor }) => Promise<string>;
   onClose: () => void;
 }
 
@@ -30,11 +30,11 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
   const [form] = useForm<LocationFormValues>();
   const isNewTrip = !editingLocation && trips.length === 0;
 
-  const handleFinish = useCallback((values: LocationFormValues) => {
+  const handleFinish = useCallback(async (values: LocationFormValues) => {
     let targetTripId = values.tripId;
 
     if (values.tripId === '__new__') {
-      targetTripId = onAddTrip({
+      targetTripId = await onAddTrip({
         name: values.tripName,
         date: values.tripDate,
         color: values.tripColor,
