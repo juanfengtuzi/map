@@ -19,6 +19,27 @@
           "id": "227ef90d-a91f-4d6e-9744-147eaf355dfb"
         }
       ]
+    },
+    {
+      "id": "38cbcf0e-7fc5-4dc0-8c38-0d2a646d925b",
+      "name": "青岛之旅",
+      "date": "2025-04",
+      "color": "purple",
+      "locations": [
+        {
+          "city": "青岛",
+          "date": "2025-06-27",
+          "description": "一起去小麦岛",
+          "lat": 36.0759,
+          "lng": 120.4085,
+          "tags": [
+            "自然风光",
+            "美食"
+          ],
+          "photo": "",
+          "id": "24efe407-88c0-487d-bc93-0eeb497d46c7"
+        }
+      ]
     }
   ]
 }
