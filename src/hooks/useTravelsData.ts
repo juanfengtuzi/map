@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import type { TravelsData, Trip, Location } from '../types';
 import { useGitHubApi } from './useGitHubApi';
 import { v4 as uuidv4 } from 'uuid';
+import sampleData from '../../data/travels.json';
 
 export function useTravelsData(token: string | null) {
   const { fetchData } = useGitHubApi(token);
@@ -18,17 +19,9 @@ export function useTravelsData(token: string | null) {
     try {
       const data: TravelsData = token ? await fetchData() : await publicFetch();
       setTrips(data.trips);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : '加载失败');
-      // 如果 API 获取失败，尝试直接 fetch（公开模式）
-      if (!token) {
-        try {
-          const data: TravelsData = await publicFetch();
-          setTrips(data.trips);
-        } catch {
-          // 保持 error 状态
-        }
-      }
+    } catch {
+      // 远程获取失败时使用本地示例数据
+      setTrips((sampleData as TravelsData).trips);
     } finally {
       setLoading(false);
     }

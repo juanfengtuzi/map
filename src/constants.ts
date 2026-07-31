@@ -31,6 +31,6 @@ export const DATA_FILE_PATH = 'data/travels.json';
 
 // 需要替换为实际的 GitHub 用户名和仓库名
 export const GITHUB_RAW_URL =
-  'https://raw.githubusercontent.com/{owner}/{repo}/main/data/travels.json';
+  'https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json';
 export const GITHUB_API_URL =
-  'https://api.github.com/repos/{owner}/{repo}/contents/data/travels.json';
+  'https://api.github.com/repos/juanfengtuzi/map/contents/data/travels.json';

@@ -10,3 +10,56 @@ html, body, #root {
   font-family: Nunito, 'Noto Sans SC', -apple-system, 'PingFang SC', sans-serif;
   background-color: #f8f8f0;
 }
+
+/* 地图容器内阴影 — 让地图有嵌入相框的感觉 */
+.map-frame {
+  position: relative;
+}
+.map-frame::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  box-shadow: inset 0 0 40px rgba(114, 93, 66, 0.08), inset 0 0 4px rgba(114, 93, 66, 0.12);
+  border-radius: 0;
+}
+
+/* 时间轴自定义滚动条 */
+.timeline-scroll::-webkit-scrollbar {
+  height: 4px;
+}
+.timeline-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.timeline-scroll::-webkit-scrollbar-thumb {
+  background: #c4b89e;
+  border-radius: 2px;
+}
+.timeline-scroll::-webkit-scrollbar-thumb:hover {
+  background: #9f927d;
+}
+
+/* Leaflet 弹出层样式覆盖 — 匹配动森风格 */
+.leaflet-popup-content-wrapper {
+  border-radius: 18px !important;
+  background: rgb(247, 243, 223) !important;
+  box-shadow: 0 4px 16px rgba(114, 93, 66, 0.15) !important;
+  font-family: Nunito, 'Noto Sans SC', sans-serif !important;
+  color: #725d42 !important;
+}
+.leaflet-popup-tip {
+  background: rgb(247, 243, 223) !important;
+}
+.leaflet-popup-close-button {
+  color: #9f927d !important;
+  font-size: 18px !important;
+}
+
+/* 标记点悬停效果 */
+.custom-marker {
+  transition: transform 0.15s ease;
+}
+.custom-marker:hover {
+  transform: scale(1.2);
+}

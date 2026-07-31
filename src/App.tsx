@@ -1,5 +1,5 @@
-import { useState, useCallback } from 'react';
-import { Cursor, Title, Footer, Button, Loading, Notification } from 'animal-island-ui';
+import { useState, useCallback, useMemo } from 'react';
+import { Cursor, Title, Footer, Button, Loading, Notification, Divider, Tag } from 'animal-island-ui';
 import MapView from './components/MapView';
 import Timeline from './components/Timeline';
 import DetailDrawer from './components/DetailDrawer';
@@ -21,6 +21,12 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+
+  const stats = useMemo(() => {
+    const citySet = new Set<string>();
+    trips.forEach(t => t.locations.forEach(l => citySet.add(l.city)));
+    return { cities: citySet.size, trips: trips.length };
+  }, [trips]);
 
   const handleSelectTrip = useCallback((tripId: string) => {
     setSelectedTripId(tripId);
@@ -77,18 +83,42 @@ export default function App() {
   return (
     <Cursor>
       <div style={{ height: '100vh', display: 'flex', flexDirection: 'column' }}>
-        {/* 顶部横幅 */}
+
+        {/* 顶部横幅 — 居中、留白、标题即主角 */}
         <div style={{
           textAlign: 'center',
-          padding: '12px 0 8px',
-          position: 'relative',
+          padding: '14px 0 6px',
           zIndex: 1001,
+          background: 'rgba(248, 248, 240, 0.2)',
+          backdropFilter: 'blur(3px)',
+          WebkitBackdropFilter: 'blur(3px)',
         }}>
-          <Title size="large" color="app-yellow">园子&兔子的旅行地图</Title>
+          <Title size="large" color="app-pink">园子 & 兔子的旅行地图</Title>
+          <p style={{
+            color: '#9f927d',
+            fontSize: 13,
+            fontWeight: 500,
+            marginTop: 6,
+            letterSpacing: '0.06em',
+          }}>
+            一起走过
+            {stats.trips > 0 ? (
+              <span>
+                <strong style={{ color: '#794f27', fontWeight: 800 }}> {stats.cities} </strong>座城市
+                <span style={{ margin: '0 6px', color: '#c4b89e' }}>·</span>
+                <strong style={{ color: '#794f27', fontWeight: 800 }}> {stats.trips} </strong>趟旅行
+              </span>
+            ) : (
+              ' 的地方'
+            )}
+          </p>
         </div>
 
+        <Divider type="wave-yellow" />
+
         {/* 主体地图 */}
-        <div style={{ flex: 1, position: 'relative' }}>
+        <div className="map-frame" style={{ flex: 1, position: 'relative' }}>
+
           {error && (
             <div style={{
               position: 'absolute',
@@ -96,12 +126,15 @@ export default function App() {
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 1002,
-              background: '#fff',
-              padding: '8px 24px',
-              borderRadius: 999,
+              background: 'rgba(247, 243, 223, 0.7)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              padding: '8px 20px',
+              borderRadius: 18,
               color: '#e05a5a',
-              fontSize: 14,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              fontSize: 13,
+              fontWeight: 600,
+              boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
             }}>
               {error}
             </div>
@@ -114,36 +147,31 @@ export default function App() {
             flyToTripId={selectedTripId}
           />
 
-          {/* 时间轴 */}
+          {/* 管理面板 — 右上角浮动 */}
+          <div style={{ position: 'absolute', top: 12, right: 16, zIndex: 1002 }}>
+            {isAuthed ? (
+              <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                <Tag size="small" color="app-teal" variant="solid">管理员</Tag>
+                <Button type="primary" size="small" onClick={handleAddNew}>新增地点</Button>
+                <Button type="text" size="small" onClick={clearToken}>退出</Button>
+              </div>
+            ) : (
+              <Button type="dashed" size="small" onClick={() => setShowAuthModal(true)}>管理</Button>
+            )}
+          </div>
+        </div>
+
+        {/* 时间轴 + Footer 组合 */}
+        <div style={{ position: 'relative' }}>
           <Timeline
             trips={trips}
             onSelectTrip={handleSelectTrip}
             selectedTripId={selectedTripId}
           />
-
-          {/* 管理按钮 */}
-          <div style={{ position: 'absolute', bottom: 12, left: 16, zIndex: 1002 }}>
-            {isAuthed ? (
-              <div style={{ display: 'flex', gap: 8 }}>
-                <Button type="primary" size="small" onClick={handleAddNew}>
-                  新增地点
-                </Button>
-                <Button type="text" size="small" onClick={clearToken}>
-                  退出管理
-                </Button>
-              </div>
-            ) : (
-              <Button type="dashed" size="small" onClick={() => setShowAuthModal(true)}>
-                管理
-              </Button>
-            )}
-          </div>
+          <Footer type="sea" />
         </div>
-
-        <Footer type="sea" />
       </div>
 
-      {/* 详情抽屉 */}
       <DetailDrawer
         location={selectedLocation}
         open={selectedLocation !== null}
@@ -151,16 +179,15 @@ export default function App() {
         isAuthed={isAuthed}
         onEdit={handleEdit}
         onDelete={handleDelete}
+        trips={trips}
       />
 
-      {/* 认证弹窗 */}
       <AuthModal
         open={showAuthModal}
         onSetToken={setToken}
         onClose={() => setShowAuthModal(false)}
       />
 
-      {/* 地点编辑表单 */}
       <LocationForm
         open={showForm}
         trips={trips}

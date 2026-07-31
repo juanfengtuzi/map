@@ -15,29 +15,34 @@ export default function Timeline({ trips, onSelectTrip, selectedTripId }: Timeli
   return (
     <div style={{
       position: 'absolute',
-      bottom: 60,
+      bottom: 56,
       left: 0,
       right: 0,
-      height: 80,
-      overflowX: 'auto',
-      overflowY: 'hidden',
-      display: 'flex',
-      alignItems: 'center',
-      padding: '0 24px',
-      gap: 0,
       zIndex: 1000,
-      background: 'rgba(248, 248, 240, 0.92)',
-      borderTop: '2px solid #e8dcc8',
+      padding: '0 16px',
     }}>
-      <div style={{
+      <div className="timeline-scroll" style={{
         display: 'flex',
         alignItems: 'center',
         gap: 0,
-        minWidth: 'max-content',
-        position: 'relative',
-        height: 4,
-        background: `repeating-linear-gradient(to right, #c4b89e 0, #c4b89e 4px, transparent 4px, transparent 12px)`,
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        padding: '8px 0',
       }}>
+        {/* 标签 */}
+        <span style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#9f927d',
+          letterSpacing: '0.08em',
+          marginRight: 16,
+          whiteSpace: 'nowrap',
+          flexShrink: 0,
+        }}>
+          旅行足迹
+        </span>
+
+        {/* 旅行胶囊 */}
         {sorted.map((trip, index) => {
           const color = TRIP_COLOR_HEX[trip.color];
           const isSelected = trip.id === selectedTripId;
@@ -47,33 +52,73 @@ export default function Timeline({ trips, onSelectTrip, selectedTripId }: Timeli
               key={trip.id}
               style={{
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
-                cursor: 'pointer',
-                marginLeft: index === 0 ? 0 : 40,
-                userSelect: 'none',
-              }}
-              onClick={() => onSelectTrip(trip.id)}
-            >
-              <span style={{
-                fontSize: 11,
-                color: '#725d42',
-                fontWeight: 500,
-                whiteSpace: 'nowrap',
-                marginBottom: 6,
-              }}>
-                {trip.name} {trip.date}
-              </span>
-              <div style={{
-                width: isSelected ? 18 : 14,
-                height: isSelected ? 18 : 14,
-                borderRadius: '50%',
-                backgroundColor: color,
-                border: isSelected ? '3px solid #725d42' : '2px solid #fff',
-                boxShadow: isSelected ? `0 0 0 3px ${color}40` : '0 1px 3px rgba(0,0,0,0.15)',
-                transition: 'all 0.2s ease',
                 flexShrink: 0,
-              }} />
+              }}
+            >
+              {/* 连接线 */}
+              {index > 0 && (
+                <div style={{
+                  width: 24,
+                  height: 2,
+                  background: `repeating-linear-gradient(to right, #c4b89e 0, #c4b89e 3px, transparent 3px, transparent 8px)`,
+                  marginRight: 0,
+                }} />
+              )}
+
+              {/* 胶囊卡片 */}
+              <div
+                onClick={() => onSelectTrip(trip.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  padding: '6px 14px 6px 12px',
+                  borderRadius: 24,
+                  cursor: 'pointer',
+                  background: isSelected
+                    ? 'rgba(247, 243, 223, 0.85)'
+                    : 'rgba(247, 243, 223, 0.5)',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
+                  boxShadow: isSelected
+                    ? `0 3px 12px rgba(114,93,66,0.15), 0 0 0 2px ${color}80`
+                    : '0 1px 4px rgba(114,93,66,0.06)',
+                  transform: isSelected ? 'translateY(-2px)' : 'none',
+                  transition: 'all 0.25s ease',
+                  userSelect: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {/* 彩色圆点 */}
+                <div style={{
+                  width: 12,
+                  height: 12,
+                  borderRadius: '50%',
+                  backgroundColor: color,
+                  flexShrink: 0,
+                  boxShadow: `0 1px 3px ${color}60`,
+                }} />
+
+                {/* 旅行名称 + 日期 */}
+                <div>
+                  <span style={{
+                    fontSize: 13,
+                    fontWeight: 700,
+                    color: '#794f27',
+                  }}>
+                    {trip.name}
+                  </span>
+                  <span style={{
+                    fontSize: 11,
+                    fontWeight: 500,
+                    color: '#9f927d',
+                    marginLeft: 6,
+                  }}>
+                    {trip.date}
+                  </span>
+                </div>
+              </div>
             </div>
           );
         })}
