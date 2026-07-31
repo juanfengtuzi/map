@@ -30,6 +30,7 @@ export default function AuthModal({ open, token, onSetToken, onClearToken, onClo
       open={open}
       title="管理设置"
       onClose={handleClose}
+      typewriter={false}
       footer={token ? (
         <>
           <Button onClick={handleClose}>关闭</Button>
