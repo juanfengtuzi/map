@@ -14,7 +14,7 @@ export default function App() {
   const {
     trips, loading, error,
     selectedLocation, setSelectedLocation,
-    addLocation, updateLocation, deleteLocation, addTripWithLocation,
+    addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto,
   } = useTravelsData(token);
 
   const [showForm, setShowForm] = useState(false);
@@ -199,6 +199,7 @@ export default function App() {
         editingLocation={editingLocation}
         onSubmit={handleFormSubmit}
         onSubmitWithNewTrip={handleSubmitWithNewTrip}
+        onUploadPhoto={uploadPhoto}
         onClose={() => {
           setShowForm(false);
           setEditingLocation(null);

@@ -5,7 +5,7 @@ import { v4 as uuidv4 } from 'uuid';
 import sampleData from '../../data/travels.json';
 
 export function useTravelsData(token: string | null) {
-  const { fetchData, saveData } = useGitHubApi(token);
+  const { fetchData, saveData, uploadPhoto } = useGitHubApi(token);
 
   const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
@@ -93,6 +93,6 @@ export function useTravelsData(token: string | null) {
   return {
     trips, loading, error,
     selectedLocation, setSelectedLocation,
-    addLocation, updateLocation, deleteLocation, addTrip, addTripWithLocation, refresh,
+    addLocation, updateLocation, deleteLocation, addTrip, addTripWithLocation, uploadPhoto, refresh,
   };
 }
