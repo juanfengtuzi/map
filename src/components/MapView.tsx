@@ -42,7 +42,7 @@ function FlyToTrip({ trips, flyToTripId }: { trips: Trip[]; flyToTripId: string 
     const lngs = trip.locations.map(l => l.lng);
     const centerLat = lats.reduce((a, b) => a + b, 0) / lats.length;
     const centerLng = lngs.reduce((a, b) => a + b, 0) / lngs.length;
-    map.stop(); // 取消任何进行中的动画，防止漂移
+    map.stop();
     map.flyTo([centerLat, centerLng], Math.max(map.getZoom(), 8), { duration: 1.2 });
   }, [flyToTripId, trips, map]);
 
