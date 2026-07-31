@@ -72,8 +72,8 @@ export function useTravelsData(token: string | null) {
     await persistTrips(newTrips);
   }, [trips, persistTrips]);
 
-  const addTrip = useCallback(async (trip: Omit<Trip, 'id'>) => {
-    const newTrips = [...trips, { ...trip, id: uuidv4() }];
+  const addTrip = useCallback(async (trip: Trip) => {
+    const newTrips = [...trips, trip];
     await persistTrips(newTrips);
   }, [trips, persistTrips]);
 

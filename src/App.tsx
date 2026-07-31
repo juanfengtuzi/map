@@ -32,9 +32,13 @@ export default function App() {
   }, []);
 
   const handleDelete = useCallback(async (loc: Location) => {
-    await deleteLocation(loc.id);
-    setSelectedLocation(null);
-    Notification.success({ message: '已删除', description: `${loc.city} 已从旅行地图中移除` });
+    try {
+      await deleteLocation(loc.id);
+      setSelectedLocation(null);
+      Notification.success({ message: '已删除', description: `${loc.city} 已从旅行地图中移除` });
+    } catch (e) {
+      Notification.error({ message: '删除失败', description: e instanceof Error ? e.message : '未知错误' });
+    }
   }, [deleteLocation, setSelectedLocation]);
 
   const handleAddNew = useCallback(() => {
@@ -46,18 +50,22 @@ export default function App() {
     tripId: string,
     location: Omit<Location, 'id'>,
   ) => {
-    if (editingLocation) {
-      await updateLocation(editingLocation.id, location);
-      Notification.success({ message: '已更新', description: `${location.city} 信息已更新` });
-    } else {
-      await addLocation(tripId, location);
-      Notification.success({ message: '已添加', description: `${location.city} 已加入旅行地图` });
+    try {
+      if (editingLocation) {
+        await updateLocation(editingLocation.id, location);
+        Notification.success({ message: '已更新', description: `${location.city} 信息已更新` });
+      } else {
+        await addLocation(tripId, location);
+        Notification.success({ message: '已添加', description: `${location.city} 已加入旅行地图` });
+      }
+    } catch (e) {
+      Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' });
     }
   }, [editingLocation, addLocation, updateLocation]);
 
   const handleAddTrip = useCallback((trip: { name: string; date: string; color: TripColor }): string => {
     const id = uuidv4();
-    addTrip({ ...trip, locations: [] });
+    addTrip({ ...trip, id, locations: [] });
     return id;
   }, [addTrip]);
 
