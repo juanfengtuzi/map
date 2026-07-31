@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Footer, Button, Loading, Notification } from 'animal-island-ui';
+import { Footer, Button, Loading, Notification, Title, Tag } from 'animal-island-ui';
 import MapView from './components/MapView';
 import Timeline from './components/Timeline';
 import DetailDrawer from './components/DetailDrawer';
@@ -63,13 +63,14 @@ export default function App() {
         borderBottom: '1px solid rgba(196, 184, 158, 0.2)',
         padding: '0 16px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
-          <span style={{ fontWeight: 800, fontSize: 18, color: '#794f27', letterSpacing: '0.02em' }}>
-            园子 & 兔子的旅行地图
-          </span>
-          <span style={{ fontSize: 11, color: '#9f927d', fontWeight: 500 }}>
-            一起走过{stats.trips > 0 ? ` ${stats.cities} 座城市 · ${stats.trips} 趟旅行` : '的地方'}
-          </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <Title size="small" color="app-pink">园子 & 兔子的旅行地图</Title>
+          {stats.trips > 0 && (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <Tag size="small" color="app-teal" variant="outlined">{stats.cities} 座城市</Tag>
+              <Tag size="small" color="app-teal" variant="outlined">{stats.trips} 趟旅行</Tag>
+            </div>
+          )}
         </div>
       </div>
 
