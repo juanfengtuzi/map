@@ -35,7 +35,7 @@ export default function App() {
 
   const handleFormSubmit = useCallback(async (tripId: string, location: Omit<Location, 'id'>) => {
     try {
-      if (editingLocation) { await updateLocation(editingLocation.id, location); Notification.success({ message: '已更新', description: `${location.city} 已更新` }); }
+      if (editingLocation) { await updateLocation(editingLocation.id, location, tripId); Notification.success({ message: '已更新', description: `${location.city} 已更新` }); }
       else { await addLocation(tripId, location); Notification.success({ message: '已添加', description: `${location.city} 已加入` }); }
     } catch (e) { Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' }); }
   }, [editingLocation, addLocation, updateLocation]);

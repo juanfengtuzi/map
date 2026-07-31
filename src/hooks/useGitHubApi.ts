@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import type { MutableRefObject } from 'react';
 import type { TravelsData } from '../types';
 import { GITHUB_RAW_URL, GITHUB_API_URL } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
@@ -18,15 +19,21 @@ export function useGitHubApi(token: string | null) {
     return response.json();
   }, []);
 
-  const saveData = useCallback(async (data: TravelsData): Promise<void> => {
+  const saveData = useCallback(async (data: TravelsData, gen?: number, genRef?: MutableRefObject<number>): Promise<void> => {
     if (!token) {
       throw new Error('未设置 GitHub Token');
     }
 
     const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
 
+    // Helper: check if this save is still the latest; abort if a newer save superseded it
+    const isLatest = () => !genRef || !gen || genRef.current <= gen;
+
     let lastError: Error | null = null;
     for (let attempt = 0; attempt < 3; attempt++) {
+      // Before each attempt, verify we are still the latest write request
+      if (!isLatest()) return;
+
       try {
         // 先获取当前文件的 sha
         const getResponse = await fetch(GITHUB_API_URL, {
@@ -59,6 +66,8 @@ export function useGitHubApi(token: string | null) {
         if (putResponse.ok) return; // Success
 
         if (putResponse.status === 409) {
+          // Re-check before retry: if superseded, don't overwrite newer data
+          if (!isLatest()) return;
           lastError = new Error('冲突，正在重试...');
           continue;
         }

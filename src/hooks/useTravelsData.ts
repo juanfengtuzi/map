@@ -12,6 +12,7 @@ export function useTravelsData(token: string | null) {
   const [error, setError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const tripsRef = useRef<Trip[]>([]);
+  const saveGenRef = useRef(0);
 
   // Keep ref in sync
   useEffect(() => { tripsRef.current = trips; }, [trips]);
@@ -36,23 +37,20 @@ export function useTravelsData(token: string | null) {
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
     const prev = tripsRef.current;
+    const gen = ++saveGenRef.current;
     tripsRef.current = newTrips;
     setTrips(newTrips);
     try {
-      await saveData({ trips: newTrips });
-      // 保存成功后稍等片刻重新拉取，确保和 GitHub CDN 同步
-      setTimeout(() => {
-        fetchData().then(data => {
-          tripsRef.current = data.trips;
-          setTrips(data.trips);
-        }).catch(() => {});
-      }, 2000);
+      await saveData({ trips: newTrips }, gen, saveGenRef);
     } catch {
-      tripsRef.current = prev;
-      setTrips(prev);
+      // Only rollback if no newer persistTrips call was made in the meantime
+      if (saveGenRef.current <= gen) {
+        tripsRef.current = prev;
+        setTrips(prev);
+      }
       throw new Error('保存失败，已还原');
     }
-  }, [saveData, fetchData]);
+  }, [saveData]);
 
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
     const current = tripsRef.current;
@@ -63,15 +61,47 @@ export function useTravelsData(token: string | null) {
     await persistTrips(newTrips);
   }, [persistTrips]);
 
-  const updateLocation = useCallback(async (locationId: string, updates: Partial<Location>) => {
+  const updateLocation = useCallback(async (locationId: string, updates: Partial<Location>, newTripId?: string) => {
     const current = tripsRef.current;
-    const newTrips = current.map(trip => ({
-      ...trip,
-      locations: trip.locations.map(loc =>
-        loc.id === locationId ? { ...loc, ...updates } : loc
-      ),
-    }));
-    await persistTrips(newTrips);
+
+    // Resolve location + current trip
+    let oldTrip: Trip | undefined;
+    let oldLocation: Location | undefined;
+    for (const t of current) {
+      const loc = t.locations.find(l => l.id === locationId);
+      if (loc) { oldTrip = t; oldLocation = loc; break; }
+    }
+    if (!oldTrip || !oldLocation) {
+      // Location not found (possibly stale ref after rapid operations); refuse silently
+      return;
+    }
+
+    const updatedLocation: Location = { ...oldLocation, ...updates };
+    const effectiveNewTripId = newTripId || oldTrip.id;
+
+    if (effectiveNewTripId !== oldTrip.id) {
+      // Moving location to a different trip
+      const newTrips = current
+        .map(trip => {
+          if (trip.id === oldTrip!.id) {
+            return { ...trip, locations: trip.locations.filter(l => l.id !== locationId) };
+          }
+          if (trip.id === effectiveNewTripId) {
+            return { ...trip, locations: [...trip.locations, updatedLocation] };
+          }
+          return trip;
+        })
+        .filter(trip => trip.locations.length > 0);
+      await persistTrips(newTrips);
+    } else {
+      const newTrips = current.map(trip => ({
+        ...trip,
+        locations: trip.locations.map(loc =>
+          loc.id === locationId ? updatedLocation : loc
+        ),
+      }));
+      await persistTrips(newTrips);
+    }
   }, [persistTrips]);
 
   const deleteLocation = useCallback(async (locationId: string) => {
