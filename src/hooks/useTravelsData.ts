@@ -36,14 +36,23 @@ export function useTravelsData(token: string | null) {
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
     const prev = tripsRef.current;
-    setTrips(newTrips);                      // 乐观更新 — 立即响应
+    tripsRef.current = newTrips;
+    setTrips(newTrips);
     try {
-      await saveData({ trips: newTrips });   // 后台同步
+      await saveData({ trips: newTrips });
+      // 保存成功后稍等片刻重新拉取，确保和 GitHub CDN 同步
+      setTimeout(() => {
+        fetchData().then(data => {
+          tripsRef.current = data.trips;
+          setTrips(data.trips);
+        }).catch(() => {});
+      }, 2000);
     } catch {
-      setTrips(prev);                        // 失败回滚
-      throw new Error('保存失败，已还原');     // 继续抛出让上层显示通知
+      tripsRef.current = prev;
+      setTrips(prev);
+      throw new Error('保存失败，已还原');
     }
-  }, [saveData]);
+  }, [saveData, fetchData]);
 
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
     const current = tripsRef.current;
