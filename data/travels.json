@@ -1,11 +1,3 @@
 {
-  "trips": [
-    {
-      "id": "trip-001",
-      "name": "杭州之旅",
-      "date": "2025-03",
-      "color": "app-pink",
-      "locations": []
-    }
-  ]
+  "trips": []
 }
