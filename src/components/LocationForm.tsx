@@ -37,6 +37,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
   const [photoRemoved, setPhotoRemoved] = useState(false);
   const [customTags, setCustomTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState('');
+  const [geocoding, setGeocoding] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isEditing = editingLocation !== null;
@@ -102,6 +103,29 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
     const current = (form.getFieldValue('tags') as string[]) || [];
     const next = current.includes(tag) ? current.filter(t => t !== tag) : [...current, tag];
     form.setFieldValue('tags', next);
+  }
+
+  async function handleGeocode() {
+    const city = form.getFieldValue('city') as string;
+    if (!city?.trim()) { Notification.warning({ message: '请先输入城市名' }); return; }
+    setGeocoding(true);
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1&countrycodes=cn`
+      );
+      const data = await res.json();
+      if (data?.[0]) {
+        form.setFieldValue('lat', parseFloat(data[0].lat).toFixed(4));
+        form.setFieldValue('lng', parseFloat(data[0].lon).toFixed(4));
+        Notification.success({ message: '已定位', description: data[0].display_name?.split(',')[0] || city });
+      } else {
+        Notification.warning({ message: '未找到', description: `无法定位 "${city}"，请手动输入坐标` });
+      }
+    } catch {
+      Notification.error({ message: '查询失败', description: '网络错误，请手动输入坐标' });
+    } finally {
+      setGeocoding(false);
+    }
   }
 
   function handleAddCustomTag() {
@@ -283,7 +307,15 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
 
         {/* ====== 地点信息 ====== */}
         <FormItem label="城市" name="city" rules={[{ required: true, message: '必填' }]}>
-          <Input placeholder="杭州" allowClear />
+          <Input placeholder="杭州" allowClear
+            suffix={
+              <span
+                onClick={handleGeocode}
+                style={{ cursor: geocoding ? 'wait' : 'pointer', fontSize: 16, userSelect: 'none', lineHeight: 1, opacity: geocoding ? 0.5 : 1 }}
+                title="自动查询坐标"
+              >&#128269;</span>
+            }
+          />
         </FormItem>
 
         <div style={{ display: 'flex', gap: 10 }}>
