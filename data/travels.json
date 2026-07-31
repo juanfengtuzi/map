@@ -1,24 +1,3 @@
 {
-  "trips": [
-    {
-      "id": "b57fbc81-eaab-4ecb-be16-0c4c41eba467",
-      "name": "杭州之旅",
-      "date": "2025-04",
-      "color": "app-pink",
-      "locations": [
-        {
-          "city": "小麦岛",
-          "date": "2025-06-27",
-          "description": "一起去小麦岛",
-          "lat": 36.0661,
-          "lng": 120.4187,
-          "tags": [
-            "自然风光"
-          ],
-          "photo": "",
-          "id": "4b045892-f2b3-42f2-82f4-47b697814277"
-        }
-      ]
-    }
-  ]
+  "trips": []
 }
