@@ -1,3 +1,24 @@
 {
-  "trips": []
+  "trips": [
+    {
+      "id": "1f238050-bad1-43c6-905e-b468d2e71b56",
+      "name": "北京之旅",
+      "date": "2025-06",
+      "color": "purple",
+      "locations": [
+        {
+          "city": "北京",
+          "date": "2025-06-27",
+          "description": "一起上学",
+          "lat": 39.906217,
+          "lng": 116.3912757,
+          "tags": [
+            "自然风光"
+          ],
+          "photo": "",
+          "id": "dcf6a385-69b1-407c-bc6a-c08d5cb03c4c"
+        }
+      ]
+    }
+  ]
 }
