@@ -23,13 +23,16 @@ export function useTravelsData(token: string | null) {
       const data: TravelsData = await fetchData();
       setTrips(data.trips);
     } catch {
-      setTrips((sampleData as TravelsData).trips);
+      if (tripsRef.current.length === 0) {
+        setTrips((sampleData as TravelsData).trips);
+      }
     } finally {
       setLoading(false);
     }
-  }, [token, fetchData]);
+  }, [fetchData]);
 
-  useEffect(() => { refresh(); }, [refresh]);
+  // 仅在首次加载时拉取数据，token 变化不重新拉取
+  useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
     const prev = tripsRef.current;

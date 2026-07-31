@@ -9,7 +9,9 @@ const PHOTOS_RAW_BASE = 'https://raw.githubusercontent.com/juanfengtuzi/map/main
 export function useGitHubApi(token: string | null) {
 
   const fetchData = useCallback(async (): Promise<TravelsData> => {
-    const response = await fetch(GITHUB_RAW_URL, { cache: 'no-cache' });
+    // 加时间戳绕过 GitHub CDN 缓存
+    const url = `${GITHUB_RAW_URL}?t=${Date.now()}`;
+    const response = await fetch(url, { cache: 'no-store' });
     if (!response.ok) {
       throw new Error(`获取数据失败: ${response.status}`);
     }
