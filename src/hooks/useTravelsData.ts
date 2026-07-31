@@ -12,7 +12,6 @@ export function useTravelsData(token: string | null) {
   const [error, setError] = useState<string | null>(null);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const tripsRef = useRef<Trip[]>([]);
-  const saveGenRef = useRef(0);
 
   // Keep ref in sync
   useEffect(() => { tripsRef.current = trips; }, [trips]);
@@ -38,18 +37,13 @@ export function useTravelsData(token: string | null) {
 
   const persistTrips = useCallback(async (newTrips: Trip[]) => {
     const prev = tripsRef.current;
-    const gen = ++saveGenRef.current;
     tripsRef.current = newTrips;
     setTrips(newTrips);
     try {
-      await saveData({ trips: newTrips }, gen, saveGenRef);
+      await saveData({ trips: newTrips });
     } catch {
-      // Only rollback if no newer persistTrips call was made in the meantime
-      if (saveGenRef.current <= gen) {
-        saveGenRef.current = gen - 1;
-        tripsRef.current = prev;
-        setTrips(prev);
-      }
+      tripsRef.current = prev;
+      setTrips(prev);
       throw new Error('保存失败，已还原');
     }
   }, [saveData]);
