@@ -14,6 +14,7 @@ export function useGitHubApi(token: string | null) {
       try {
         const apiRes = await fetch(GITHUB_API_URL, {
           headers: { Authorization: `Bearer ${token}` },
+          cache: 'reload',
         });
         if (apiRes.ok) {
           const fileInfo = await apiRes.json();
@@ -23,7 +24,10 @@ export function useGitHubApi(token: string | null) {
           for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
           return JSON.parse(new TextDecoder().decode(bytes));
         }
-      } catch { /* fall through to raw URL */ }
+        // API returned non-ok status; fall through to raw URL
+      } catch (e) {
+        console.error('GitHub API read failed, falling back to raw URL:', e);
+      }
     }
     // 无 token 时走 raw URL
     const url = `${GITHUB_RAW_URL}?t=${Date.now()}`;
@@ -46,6 +50,7 @@ export function useGitHubApi(token: string | null) {
         // 获取当前文件的 sha
         const getResponse = await fetch(GITHUB_API_URL, {
           headers: { Authorization: `Bearer ${token}` },
+          cache: 'reload',
         });
         if (!getResponse.ok) {
           if (getResponse.status === 401) {

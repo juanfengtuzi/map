@@ -41,12 +41,21 @@ export function useTravelsData(token: string | null) {
     setTrips(newTrips);
     try {
       await saveData({ trips: newTrips });
-    } catch {
+      // 保存成功后稍等片刻重新拉取，确保和 GitHub 同步
+      setTimeout(() => {
+        fetchData().then(data => {
+          tripsRef.current = data.trips;
+          setTrips(data.trips);
+        }).catch((e) => {
+          console.error('保存后同步拉取失败:', e);
+        });
+      }, 2000);
+    } catch (e) {
       tripsRef.current = prev;
       setTrips(prev);
-      throw new Error('保存失败，已还原');
+      throw new Error(e instanceof Error ? e.message : '保存失败，已还原');
     }
-  }, [saveData]);
+  }, [saveData, fetchData]);
 
   const addLocation = useCallback(async (tripId: string, loc: Omit<Location, 'id'>) => {
     const current = tripsRef.current;
