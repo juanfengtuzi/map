@@ -53,17 +53,30 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
   function handlePhotoChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (file.size > 500 * 1024) {
-      Notification.warning({ message: '图片太大', description: '请选择小于 500KB 的图片' });
+    if (file.size > 10 * 1024 * 1024) {
+      Notification.warning({ message: '图片太大', description: '请选择小于 10MB 的图片' });
       e.target.value = '';
       return;
     }
+
+    // Canvas 压缩：最大宽度 1200px，JPEG 质量 0.7
+    const img = new Image();
     const reader = new FileReader();
     reader.onload = () => {
-      const dataUrl = reader.result as string;
-      setPhotoPreview(dataUrl);
-      setPhotoDataUrl(dataUrl);
-      setPhotoRemoved(false);
+      img.onload = () => {
+        const maxW = 1200;
+        let w = img.width, h = img.height;
+        if (w > maxW) { h = h * (maxW / w); w = maxW; }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        const ctx = canvas.getContext('2d')!;
+        ctx.drawImage(img, 0, 0, w, h);
+        const compressed = canvas.toDataURL('image/jpeg', 0.7);
+        setPhotoPreview(compressed);
+        setPhotoDataUrl(compressed);
+        setPhotoRemoved(false);
+      };
+      img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
   }
@@ -342,7 +355,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
               )}
             </div>
             <div style={{ fontSize: 11, color: '#c4b89e', marginTop: 4 }}>
-              图片上传到 GitHub 仓库，最大 500KB
+              支持 jpg/png，自动压缩，最大 10MB
             </div>
           </div>
         </FormItem>
