@@ -86,7 +86,9 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
       onClose={() => { form.resetFields(); setIsNewTrip(false); onClose(); }}
       footer={null}
       typewriter={false}
+      width={560}
     >
+      <div style={{ maxHeight: '65vh', overflowY: 'auto', paddingRight: 4 }}>
       <Form
         form={form as any}
         initialValues={{
@@ -206,6 +208,7 @@ export default function LocationForm({ open, trips, editingLocation, onSubmit, o
           <Button type="primary" htmlType="submit" block>保存</Button>
         </FormItem>
       </Form>
+      </div>
     </Modal>
   );
 }
