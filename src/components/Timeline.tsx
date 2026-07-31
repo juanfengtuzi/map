@@ -14,12 +14,10 @@ export default function Timeline({ trips, onSelectTrip, selectedTripId }: Timeli
 
   return (
     <div style={{
-      position: 'absolute',
-      bottom: 56,
-      left: 0,
-      right: 0,
-      zIndex: 1000,
-      padding: '0 16px',
+      padding: '6px 16px 4px',
+      background: 'rgba(248, 248, 240, 0.35)',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)',
     }}>
       <div className="timeline-scroll" style={{
         display: 'flex',
