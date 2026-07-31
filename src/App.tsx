@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from 'react';
-import { Footer, Button, Loading, Notification, Title, Tag } from 'animal-island-ui';
+import { Footer, Button, Loading, Notification, Title } from 'animal-island-ui';
 import MapView from './components/MapView';
 import Timeline from './components/Timeline';
 import DetailDrawer from './components/DetailDrawer';
@@ -54,28 +54,26 @@ export default function App() {
         <MapView trips={trips} selectedLocation={selectedLocation} onSelectLocation={setSelectedLocation} flyToTripId={selectedTripId} />
       </div>
 
-      {/* ====== 浮动标题栏 P0-1: ≤56px, 半透明毛玻璃 ====== */}
+      {/* ====== 浮动标题栏 ====== */}
       <div style={{
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 900,
-        height: 52, display: 'flex', alignItems: 'center', justifyContent: 'center',
-        background: 'rgba(248, 248, 240, 0.35)', backdropFilter: 'blur(10px)',
+        display: 'flex', flexDirection: 'column', alignItems: 'center',
+        background: 'rgba(248, 248, 240, 0.3)', backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(196, 184, 158, 0.2)',
-        padding: '0 16px',
+        padding: '10px 16px 8px',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Title size="small" color="app-pink">园子 & 兔子的旅行地图</Title>
-          {stats.trips > 0 && (
-            <div style={{ display: 'flex', gap: 6 }}>
-              <Tag size="small" color="app-teal" variant="outlined">{stats.cities} 座城市</Tag>
-              <Tag size="small" color="app-teal" variant="outlined">{stats.trips} 趟旅行</Tag>
-            </div>
-          )}
-        </div>
+        <Title size="middle" color="app-pink">园子 & 兔子的旅行地图</Title>
+        <p style={{
+          margin: 0, fontSize: 12, fontWeight: 500, color: '#9f927d',
+          letterSpacing: '0.05em', marginTop: 2,
+        }}>
+          一起走过{stats.trips > 0 ? ` ${stats.cities} 座城市 · ${stats.trips} 趟旅行` : '的地方'}
+        </p>
       </div>
 
-      {/* ====== P1-1: 管理 FAB ====== */}
-      <div style={{ position: 'fixed', top: 62, right: 16, zIndex: 901 }}>
+      {/* ====== 管理 FAB ====== */}
+      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 901 }}>
         {isAuthed ? (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Button type="primary" size="middle" onClick={handleAddNew} style={{ minWidth: 44, minHeight: 44 }}>+ 新增地点</Button>
@@ -97,7 +95,7 @@ export default function App() {
       {/* ====== 错误浮层 ====== */}
       {error && (
         <div style={{
-          position: 'fixed', top: 62, left: '50%', transform: 'translateX(-50%)', zIndex: 950,
+          position: 'fixed', top: 80, left: '50%', transform: 'translateX(-50%)', zIndex: 950,
           background: 'rgba(255,255,255,0.85)', backdropFilter: 'blur(6px)', padding: '6px 16px',
           borderRadius: 18, color: '#e05a5a', fontSize: 13, fontWeight: 600,
           boxShadow: '0 2px 10px rgba(0,0,0,0.06)',
