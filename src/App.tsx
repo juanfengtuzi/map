@@ -21,15 +21,6 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
-  const [pickedLat, setPickedLat] = useState<number | null>(null);
-  const [pickedLng, setPickedLng] = useState<number | null>(null);
-
-  const handleMapClick = useCallback((lat: number, lng: number) => {
-    if (showForm) {
-      setPickedLat(lat);
-      setPickedLng(lng);
-    }
-  }, [showForm]);
 
   const stats = useMemo(() => {
     const citySet = new Set<string>();
@@ -43,8 +34,6 @@ export default function App() {
 
   const handleEdit = useCallback((loc: Location) => {
     setEditingLocation(loc);
-    setPickedLat(loc.lat);
-    setPickedLng(loc.lng);
     setShowForm(true);
   }, []);
 
@@ -60,8 +49,6 @@ export default function App() {
 
   const handleAddNew = useCallback(() => {
     setEditingLocation(null);
-    setPickedLat(null);
-    setPickedLng(null);
     setShowForm(true);
   }, []);
 
@@ -158,7 +145,6 @@ export default function App() {
             selectedLocation={selectedLocation}
             onSelectLocation={setSelectedLocation}
             flyToTripId={selectedTripId}
-            onMapClick={showForm ? handleMapClick : null}
           />
 
           {/* 管理面板 — 右上角浮动 */}
@@ -206,15 +192,11 @@ export default function App() {
         open={showForm}
         trips={trips}
         editingLocation={editingLocation}
-        pickedLat={pickedLat}
-        pickedLng={pickedLng}
         onSubmit={handleFormSubmit}
         onAddTrip={handleAddTrip}
         onClose={() => {
           setShowForm(false);
           setEditingLocation(null);
-          setPickedLat(null);
-          setPickedLng(null);
         }}
       />
     </Cursor>
