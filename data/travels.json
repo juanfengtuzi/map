@@ -1,3 +1,24 @@
 {
-  "trips": []
+  "trips": [
+    {
+      "id": "155310ae-3930-42b3-b29d-1692fec8a124",
+      "name": "北京之旅",
+      "date": "2025-03",
+      "color": "app-pink",
+      "locations": [
+        {
+          "city": "北京",
+          "date": "2025-03",
+          "description": "一起上学",
+          "lat": 39.9057,
+          "lng": 116.3913,
+          "tags": [
+            "城市漫步"
+          ],
+          "photo": "",
+          "id": "402871f4-d8f5-47a1-93fb-bac3ba675657"
+        }
+      ]
+    }
+  ]
 }
