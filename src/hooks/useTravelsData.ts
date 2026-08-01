@@ -25,8 +25,15 @@ export function useTravelsData(token: string | null) {
       const data: TravelsData = await fetchData();
       setTrips(data.trips);
       setDirty(false);
+      // 存一份到 localStorage，无 token 时兜底
+      try { localStorage.setItem('cached_trips', JSON.stringify(data.trips)); } catch {}
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载数据失败');
+      // 尝试从 localStorage 恢复
+      try {
+        const cached = localStorage.getItem('cached_trips');
+        if (cached) { const parsed = JSON.parse(cached); if (parsed.length > 0) { setTrips(parsed); return; } }
+      } catch {}
       if (tripsRef.current.length === 0) {
         setTrips((sampleData as TravelsData).trips);
       }
@@ -42,6 +49,8 @@ export function useTravelsData(token: string | null) {
     tripsRef.current = newTrips;
     setTrips(newTrips);
     setDirty(true);
+    // 即时缓存到 localStorage，防止关闭标签丢数据
+    try { localStorage.setItem('cached_trips', JSON.stringify(newTrips)); } catch {}
   }, []);
 
   // ===== 一次性同步到 GitHub =====
