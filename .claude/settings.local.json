@@ -28,7 +28,8 @@
       "Read(//tmp/**)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json?t=$\\(date +%s%N\\)\")",
       "Bash(curl -s -D - -o /dev/null \"https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json?t=$\\(date +%s%N\\)\")",
-      "Bash(python -c ' *)"
+      "Bash(python -c ' *)",
+      "WebFetch(domain:guokaigdg.github.io)"
     ]
   }
 }

@@ -56,8 +56,6 @@ export default function App() {
     catch (e) { Notification.error({ message: '保存失败', description: e instanceof Error ? e.message : '未知错误' }); }
   }, [addTripWithLocation]);
 
-  if (loading) return <Loading active />;
-
   return (
     <>
       {/* ====== 全屏地图 ====== */}
@@ -119,6 +117,14 @@ export default function App() {
       <DetailDrawer location={selectedLocation} open={selectedLocation !== null} onClose={() => setSelectedLocation(null)} isAuthed={isAuthed} onEdit={handleEdit} onDelete={handleDelete} trips={trips} />
       <AuthModal open={showAuthModal} token={token} onSetToken={setToken} onClearToken={clearToken} onClose={() => setShowAuthModal(false)} />
       <LocationForm open={showForm} trips={trips} editingLocation={editingLocation} onSubmit={handleFormSubmit} onSubmitWithNewTrip={handleSubmitWithNewTrip} onUploadPhoto={uploadPhoto} onClose={() => { setShowForm(false); setEditingLocation(null); }} />
+
+      {/* ====== 加载遮罩：覆盖在 App 之上，active=false 时中心圆形透明扩散露出底层 ====== */}
+      <div style={{
+        position: 'fixed', inset: 0, zIndex: 2000,
+        pointerEvents: loading ? 'auto' : 'none',
+      }}>
+        <Loading active={loading} />
+      </div>
     </>
   );
 }

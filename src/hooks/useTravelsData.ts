@@ -18,8 +18,8 @@ export function useTravelsData(token: string | null) {
   // Keep ref in sync
   useEffect(() => { tripsRef.current = trips; }, [trips]);
 
-  const refresh = useCallback(async () => {
-    setLoading(true);
+  const refresh = useCallback(async (showOverlay = true) => {
+    if (showOverlay) setLoading(true);
     setError(null);
     try {
       // fetchData 走 Contents API（认证/公开），始终返回最新数据，不依赖 CDN
@@ -42,12 +42,18 @@ export function useTravelsData(token: string | null) {
         setTrips((sampleData as TravelsData).trips);
       }
     } finally {
-      setLoading(false);
+      if (showOverlay) setLoading(false);
     }
   }, [fetchData]);
 
-  // token 变化（登录/登出）时重新拉取，避免显示过期数据
-  useEffect(() => { refresh(); }, [refresh]);
+  // 首次加载（带遮罩，配合 Loading 圆形揭示动画）
+  useEffect(() => { refresh(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 登录后静默刷新（无遮罩），覆盖公开 API 受限等场景
+  useEffect(() => {
+    if (token) { refresh(false); }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   // ===== 本地修改（不触发 API） =====
   const updateLocalTrips = useCallback((newTrips: Trip[]) => {
