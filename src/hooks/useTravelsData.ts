@@ -22,17 +22,21 @@ export function useTravelsData(token: string | null) {
     setLoading(true);
     setError(null);
     try {
+      // fetchData 走 Contents API（认证/公开），始终返回最新数据，不依赖 CDN
       const data: TravelsData = await fetchData();
       setTrips(data.trips);
       setDirty(false);
-      // 存一份到 localStorage，无 token 时兜底
+      // 仅用 API 最新结果写缓存（raw CDN 已被移除，不再有毒化源）
       try { localStorage.setItem('cached_trips', JSON.stringify(data.trips)); } catch {}
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载数据失败');
-      // 尝试从 localStorage 恢复
+      // 网络失败时回退本机缓存（本设备最新已知状态）
       try {
-        const cached = localStorage.getItem('cached_trips');
-        if (cached) { const parsed = JSON.parse(cached); if (parsed.length > 0) { setTrips(parsed); return; } }
+        const cachedRaw = localStorage.getItem('cached_trips');
+        if (cachedRaw !== null) {
+          const parsed = JSON.parse(cachedRaw);
+          if (Array.isArray(parsed)) { setTrips(parsed); return; }
+        }
       } catch {}
       if (tripsRef.current.length === 0) {
         setTrips((sampleData as TravelsData).trips);
@@ -42,7 +46,8 @@ export function useTravelsData(token: string | null) {
     }
   }, [fetchData]);
 
-  useEffect(() => { refresh(); }, []); // eslint-disable-line
+  // token 变化（登录/登出）时重新拉取，避免显示过期数据
+  useEffect(() => { refresh(); }, [refresh]);
 
   // ===== 本地修改（不触发 API） =====
   const updateLocalTrips = useCallback((newTrips: Trip[]) => {
@@ -54,12 +59,13 @@ export function useTravelsData(token: string | null) {
   }, []);
 
   // ===== 一次性同步到 GitHub =====
-  const syncToGitHub = useCallback(async () => {
-    if (!dirty) return;
+  const syncToGitHub = useCallback(async (): Promise<boolean> => {
+    if (!dirty) return false;
     setSyncing(true);
     try {
       await saveData({ trips: tripsRef.current });
       setDirty(false);
+      return true;
     } catch (e) {
       throw new Error(e instanceof Error ? e.message : '同步失败');
     } finally {

@@ -22,7 +22,13 @@
       "Bash(git stash *)",
       "Bash(git *)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "WebFetch(domain:api.github.com)"
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -s \"https://api.github.com/repos/juanfengtuzi/map/contents/data/travels.json\" -H \"Accept: application/vnd.github+json\")",
+      "Bash(curl -s -D - -o /tmp/raw_travels.json \"https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json\" -H \"Cache-Control: no-cache\")",
+      "Read(//tmp/**)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" \"https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json?t=$\\(date +%s%N\\)\")",
+      "Bash(curl -s -D - -o /dev/null \"https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json?t=$\\(date +%s%N\\)\")",
+      "Bash(python -c ' *)"
     ]
   }
 }

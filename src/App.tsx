@@ -11,7 +11,7 @@ import type { Location, TripColor } from './types';
 
 export default function App() {
   const { token, isAuthed, setToken, clearToken, showAuthModal, setShowAuthModal } = useAuth();
-  const { trips, loading, error, dirty, syncing, selectedLocation, setSelectedLocation, addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto, syncToGitHub, refresh } = useTravelsData(token);
+  const { trips, loading, error, dirty, syncing, selectedLocation, setSelectedLocation, addLocation, updateLocation, deleteLocation, addTripWithLocation, uploadPhoto, syncToGitHub } = useTravelsData(token);
 
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
@@ -35,16 +35,14 @@ export default function App() {
 
   const handleLogout = useCallback(async () => {
     try {
-      await syncToGitHub();
-      // 同步成功后用 token 走 API 拉最新数据覆盖本地（绕过 CDN）
-      await refresh();
-      Notification.success({ message: '已同步', description: '所有修改已保存到 GitHub' });
+      const didSave = await syncToGitHub();
+      if (didSave) Notification.success({ message: '已同步', description: '所有修改已保存到 GitHub' });
     } catch (e) {
       Notification.error({ message: '同步失败', description: e instanceof Error ? e.message : '请重试' });
       return;
     }
     clearToken();
-  }, [syncToGitHub, refresh, clearToken]);
+  }, [syncToGitHub, clearToken]);
 
   const handleFormSubmit = useCallback(async (tripId: string, location: Omit<Location, 'id'>) => {
     try {

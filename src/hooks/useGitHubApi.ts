@@ -1,6 +1,6 @@
 import { useCallback } from 'react';
 import type { TravelsData } from '../types';
-import { GITHUB_RAW_URL, GITHUB_API_URL } from '../constants';
+import { GITHUB_API_URL } from '../constants';
 import { v4 as uuidv4 } from 'uuid';
 
 const PHOTOS_API_URL = 'https://api.github.com/repos/juanfengtuzi/map/contents/data/photos';
@@ -8,35 +8,37 @@ const PHOTOS_RAW_BASE = 'https://raw.githubusercontent.com/juanfengtuzi/map/main
 
 export function useGitHubApi(token: string | null) {
 
+  // Contents API 读取并解码（正确处理 UTF-8），认证或公开均可
+  const readContentsApi = useCallback(async (authToken: string | null): Promise<TravelsData> => {
+    const headers: Record<string, string> = authToken ? { Authorization: `Bearer ${authToken}` } : {};
+    const apiRes = await fetch(GITHUB_API_URL, { headers, cache: 'reload' });
+    if (!apiRes.ok) {
+      throw new Error(`读取文件失败: ${apiRes.status}`);
+    }
+    const fileInfo = await apiRes.json();
+    const binary = atob(fileInfo.content);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return JSON.parse(new TextDecoder().decode(bytes));
+  }, []);
+
   const fetchData = useCallback(async (): Promise<TravelsData> => {
-    // 有 token 时走 API（永远最新，不受 CDN 影响）
+    // 1) 有 token：认证 API（始终最新）
     if (token) {
       try {
-        const apiRes = await fetch(GITHUB_API_URL, {
-          headers: { Authorization: `Bearer ${token}` },
-          cache: 'reload',
-        });
-        if (apiRes.ok) {
-          const fileInfo = await apiRes.json();
-          // Content API 返回 base64，需正确处理 UTF-8
-          const binary = atob(fileInfo.content);
-          const bytes = new Uint8Array(binary.length);
-          for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-          return JSON.parse(new TextDecoder().decode(bytes));
-        }
-        // API returned non-ok status; fall through to raw URL
+        return await readContentsApi(token);
       } catch (e) {
-        console.error('GitHub API read failed, falling back to raw URL:', e);
+        console.error('认证 API 读取失败，尝试公开 API:', e);
       }
     }
-    // 无 token 时走 raw URL
-    const url = `${GITHUB_RAW_URL}?t=${Date.now()}`;
-    const response = await fetch(url, { cache: 'no-store' });
-    if (!response.ok) {
-      throw new Error(`获取数据失败: ${response.status}`);
+    // 2) 无 token：公开仓库免认证 API（始终最新，无 CDN 延迟）
+    try {
+      return await readContentsApi(null);
+    } catch (e) {
+      console.error('公开 API 读取失败:', e);
     }
-    return response.json();
-  }, [token]);
+    throw new Error('无法读取旅行数据');
+  }, [token, readContentsApi]);
 
   const saveData = useCallback(async (data: TravelsData): Promise<void> => {
     if (!token) {
