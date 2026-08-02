@@ -17,6 +17,30 @@
           ],
           "photo": "https://raw.githubusercontent.com/juanfengtuzi/map/main/data/photos/a3e5f2ba-b240-4cfd-8850-f00999085309.jpg",
           "id": "35c9cb6e-b5e2-4f4e-94fc-337b2f1783f3"
+        },
+        {
+          "city": "海之恋Park",
+          "date": "2026-4-25",
+          "description": "一起逛海边",
+          "lat": 36.065361,
+          "lng": 120.434592,
+          "tags": [
+            "海边"
+          ],
+          "photo": "https://raw.githubusercontent.com/juanfengtuzi/map/main/data/photos/af736734-1112-42f7-aac9-abf8082c817a.jpg",
+          "id": "d8cfdd1f-ea31-4cc4-ba49-a3f3bde9e0f7"
+        },
+        {
+          "city": "小麦岛公园",
+          "date": "2026-4-25",
+          "description": "一起逛小麦岛",
+          "lat": 36.054245,
+          "lng": 120.431045,
+          "tags": [
+            "城市漫步"
+          ],
+          "photo": "https://raw.githubusercontent.com/juanfengtuzi/map/main/data/photos/8844d6ae-1afa-46d4-bd00-ac34bf34e7fd.jpg",
+          "id": "b6210f7a-ebb5-4a13-aa2b-9c2705af14b3"
         }
       ]
     }
