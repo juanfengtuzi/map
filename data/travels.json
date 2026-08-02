@@ -1,3 +1,24 @@
 {
-  "trips": []
+  "trips": [
+    {
+      "id": "3162ac39-1e85-4b4e-894c-10f8f24b22e2",
+      "name": "青岛之旅",
+      "date": "2026-04",
+      "color": "app-pink",
+      "locations": [
+        {
+          "city": "青岛",
+          "date": "2026-4-25",
+          "description": "一起去青岛",
+          "lat": 36.0663,
+          "lng": 120.3778,
+          "tags": [
+            "自然风光"
+          ],
+          "photo": "https://raw.githubusercontent.com/juanfengtuzi/map/main/data/photos/a3e5f2ba-b240-4cfd-8850-f00999085309.jpg",
+          "id": "35c9cb6e-b5e2-4f4e-94fc-337b2f1783f3"
+        }
+      ]
+    }
+  ]
 }
