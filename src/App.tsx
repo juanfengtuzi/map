@@ -8,6 +8,7 @@ import LocationForm from './components/LocationForm';
 import { useAuth } from './hooks/useAuth';
 import { useTravelsData } from './hooks/useTravelsData';
 import { useProvinces } from './hooks/useProvinces';
+import { useIsMobile } from './hooks/useIsMobile';
 import TripAlbum from './components/TripAlbum';
 import type { Location, Trip, TripColor } from './types';
 
@@ -23,6 +24,7 @@ export default function App() {
   const closeAlbum = useCallback(() => setAlbumTrip(null), []);
 
   const { provinceData, visitedMap } = useProvinces(trips);
+  const isMobile = useIsMobile();
 
   const stats = useMemo(() => {
     const citySet = new Set<string>();
@@ -82,11 +84,11 @@ export default function App() {
         background: 'rgba(248, 248, 240, 0.3)', backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
         borderBottom: '1px solid rgba(196, 184, 158, 0.2)',
-        padding: '10px 16px 8px',
+        padding: isMobile ? '6px 12px 4px' : '10px 16px 8px',
       }}>
-        <Title size="middle" color="app-pink">园子 & 兔子的旅行地图</Title>
+        <Title size={isMobile ? 'small' : 'middle'} color="app-pink">园子 & 兔子的旅行地图</Title>
         <p style={{
-          margin: 0, fontSize: 12, fontWeight: 500, color: '#9f927d',
+          margin: 0, fontSize: isMobile ? 11 : 12, fontWeight: 500, color: '#9f927d',
           letterSpacing: '0.05em', marginTop: 2,
         }}>
           一起走过{stats.trips > 0 ? ` ${stats.cities} 个地方 · ${stats.trips} 趟旅行` : '的地方'}
@@ -94,7 +96,13 @@ export default function App() {
       </div>
 
       {/* ====== 管理 FAB ====== */}
-      <div style={{ position: 'fixed', top: 14, right: 16, zIndex: 901 }}>
+      <div style={{
+        position: 'fixed',
+        top: isMobile ? 'auto' : 14,
+        bottom: isMobile ? 92 : 'auto',
+        right: isMobile ? 12 : 16,
+        zIndex: 901,
+      }}>
         {isAuthed ? (
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
             <Button type="primary" size="middle" onClick={handleAddNew} style={{ minWidth: 44, minHeight: 44 }}>+ 新增地点</Button>
@@ -110,7 +118,7 @@ export default function App() {
       {/* ====== 底部时间轴 + Footer P0-3 ====== */}
       <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, zIndex: 900 }}>
         <Timeline trips={trips} onSelectTrip={handleSelectTrip} selectedTripId={selectedTripId} />
-        <div style={{ height: 40, overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
+        <div style={{ height: isMobile ? 28 : 40, overflow: 'hidden', display: 'flex', alignItems: 'flex-end' }}>
           <Footer type="sea" />
         </div>
       </div>

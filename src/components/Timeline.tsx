@@ -13,12 +13,7 @@ export default function Timeline({ trips, onSelectTrip, selectedTripId }: Timeli
   const sorted = [...trips].sort((a, b) => a.date.localeCompare(b.date));
 
   return (
-    <div style={{
-      padding: '6px 16px 4px',
-      background: 'rgba(248, 248, 240, 0.35)',
-      backdropFilter: 'blur(6px)',
-      WebkitBackdropFilter: 'blur(6px)',
-    }}>
+    <div className="timeline-bar" style={{ background: 'rgba(248, 248, 240, 0.35)', backdropFilter: 'blur(6px)', WebkitBackdropFilter: 'blur(6px)' }}>
       <div className="timeline-scroll" style={{
         display: 'flex', alignItems: 'center', gap: 8,
         overflowX: 'auto', overflowY: 'hidden', padding: '4px 0',
