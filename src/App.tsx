@@ -18,7 +18,7 @@ export default function App() {
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
 
-  const { provinceData, visitedMap, visitedCount, totalCount } = useProvinces(trips);
+  const { provinceData, visitedMap } = useProvinces(trips);
 
   const stats = useMemo(() => {
     const citySet = new Set<string>();
@@ -80,8 +80,7 @@ export default function App() {
           margin: 0, fontSize: 12, fontWeight: 500, color: '#9f927d',
           letterSpacing: '0.05em', marginTop: 2,
         }}>
-          一起走过{stats.trips > 0 ? ` ${stats.cities} 座城市 · ${stats.trips} 趟旅行` : '的地方'}
-          {provinceData ? ` · 已点亮 ${visitedCount}/${totalCount} 省` : ''}
+          一起走过{stats.trips > 0 ? ` ${stats.cities} 个地方 · ${stats.trips} 趟旅行` : '的地方'}
         </p>
       </div>
 
