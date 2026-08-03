@@ -96,6 +96,7 @@ export default function App() {
       </div>
 
       {/* ====== 管理 FAB ====== */}
+      {/* 移动端：右下浮动，92 ≈ 时间轴 ~43px + Footer 28px + 21px 间隙，锚定底部所以恒定不重叠 */}
       <div style={{
         position: 'fixed',
         top: isMobile ? 'auto' : 14,
