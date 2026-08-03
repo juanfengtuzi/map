@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, TileLayer, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import type { Trip, Location } from '../types';
+import type { Trip, Location, ProvinceData } from '../types';
 import { DEFAULT_CENTER, DEFAULT_ZOOM, GAODE_TILE_URL } from '../constants';
 import TripPolylines from './TripPolylines';
 import LocationMarkers from './LocationMarkers';
+import ProvinceLayer from './ProvinceLayer';
 
 interface MapViewProps {
   trips: Trip[];
   selectedLocation: Location | null;
   onSelectLocation: (loc: Location) => void;
   flyToTripId: string | null;
+  provinces: ProvinceData | null;
+  visitedMap: Map<string, string>;
 }
 
 function FitBounds({ trips }: { trips: Trip[] }) {
@@ -49,7 +52,7 @@ function FlyToTrip({ trips, flyToTripId }: { trips: Trip[]; flyToTripId: string 
   return null;
 }
 
-export default function MapView({ trips, selectedLocation, onSelectLocation, flyToTripId }: MapViewProps) {
+export default function MapView({ trips, selectedLocation, onSelectLocation, flyToTripId, provinces, visitedMap }: MapViewProps) {
   const allLocations = useMemo(
     () => trips.flatMap(t => t.locations),
     [trips]
@@ -67,6 +70,7 @@ export default function MapView({ trips, selectedLocation, onSelectLocation, fly
         subdomains={['1', '2', '3', '4']}
         attribution='&copy; 高德地图'
       />
+      {provinces && <ProvinceLayer data={provinces} visitedMap={visitedMap} />}
       <FitBounds trips={trips} />
       <FlyToTrip trips={trips} flyToTripId={flyToTripId} />
       <TripPolylines trips={trips} />

@@ -7,6 +7,7 @@ import AuthModal from './components/AuthModal';
 import LocationForm from './components/LocationForm';
 import { useAuth } from './hooks/useAuth';
 import { useTravelsData } from './hooks/useTravelsData';
+import { useProvinces } from './hooks/useProvinces';
 import type { Location, TripColor } from './types';
 
 export default function App() {
@@ -16,6 +17,8 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+
+  const { provinceData, visitedMap, visitedCount, totalCount } = useProvinces(trips);
 
   const stats = useMemo(() => {
     const citySet = new Set<string>();
@@ -60,7 +63,7 @@ export default function App() {
     <>
       {/* ====== 全屏地图 ====== */}
       <div style={{ position: 'fixed', inset: 0 }}>
-        <MapView trips={trips} selectedLocation={selectedLocation} onSelectLocation={setSelectedLocation} flyToTripId={selectedTripId} />
+        <MapView trips={trips} selectedLocation={selectedLocation} onSelectLocation={setSelectedLocation} flyToTripId={selectedTripId} provinces={provinceData} visitedMap={visitedMap} />
       </div>
 
       {/* ====== 浮动标题栏 ====== */}
@@ -78,6 +81,7 @@ export default function App() {
           letterSpacing: '0.05em', marginTop: 2,
         }}>
           一起走过{stats.trips > 0 ? ` ${stats.cities} 座城市 · ${stats.trips} 趟旅行` : '的地方'}
+          {provinceData ? ` · 已点亮 ${visitedCount}/${totalCount} 省` : ''}
         </p>
       </div>
 

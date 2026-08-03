@@ -34,3 +34,6 @@ export const GITHUB_RAW_URL =
   'https://raw.githubusercontent.com/juanfengtuzi/map/main/data/travels.json';
 export const GITHUB_API_URL =
   'https://api.github.com/repos/juanfengtuzi/map/contents/data/travels.json';
+
+export const CHINA_PROVINCES_URL =
+  'https://geo.datav.aliyun.com/areas_v3/bound/100000_full.json';

@@ -34,3 +34,13 @@ export interface Trip {
 export interface TravelsData {
   trips: Trip[];
 }
+
+export interface ProvinceFeature {
+  type: 'Feature';
+  properties: { adcode?: string; name?: string; center?: [number, number] };
+  geometry: { type: 'Polygon' | 'MultiPolygon'; coordinates: any };
+}
+export interface ProvinceData {
+  type: 'FeatureCollection';
+  features: ProvinceFeature[];
+}
