@@ -8,7 +8,8 @@ import LocationForm from './components/LocationForm';
 import { useAuth } from './hooks/useAuth';
 import { useTravelsData } from './hooks/useTravelsData';
 import { useProvinces } from './hooks/useProvinces';
-import type { Location, TripColor } from './types';
+import TripAlbum from './components/TripAlbum';
+import type { Location, Trip, TripColor } from './types';
 
 export default function App() {
   const { token, isAuthed, setToken, clearToken, showAuthModal, setShowAuthModal } = useAuth();
@@ -17,6 +18,9 @@ export default function App() {
   const [showForm, setShowForm] = useState(false);
   const [editingLocation, setEditingLocation] = useState<Location | null>(null);
   const [selectedTripId, setSelectedTripId] = useState<string | null>(null);
+  const [albumTrip, setAlbumTrip] = useState<Trip | null>(null);
+
+  const closeAlbum = useCallback(() => setAlbumTrip(null), []);
 
   const { provinceData, visitedMap } = useProvinces(trips);
 
@@ -26,7 +30,12 @@ export default function App() {
     return { cities: citySet.size, trips: trips.length };
   }, [trips]);
 
-  const handleSelectTrip = useCallback((tripId: string) => { setSelectedTripId(tripId); }, []);
+  const handleSelectTrip = useCallback((tripId: string) => {
+    setSelectedTripId(tripId);
+    setSelectedLocation(null); // 关闭可能打开的详情抽屉
+    const trip = trips.find(t => t.id === tripId);
+    if (trip && trip.locations.length > 0) setAlbumTrip(trip);
+  }, [trips]);
   const handleEdit = useCallback((loc: Location) => { setSelectedLocation(null); setEditingLocation(loc); setShowForm(true); }, []);
 
   const handleDelete = useCallback(async (loc: Location) => {
@@ -120,6 +129,9 @@ export default function App() {
       <DetailDrawer location={selectedLocation} open={selectedLocation !== null} onClose={() => setSelectedLocation(null)} isAuthed={isAuthed} onEdit={handleEdit} onDelete={handleDelete} trips={trips} />
       <AuthModal open={showAuthModal} token={token} onSetToken={setToken} onClearToken={clearToken} onClose={() => setShowAuthModal(false)} />
       <LocationForm open={showForm} trips={trips} editingLocation={editingLocation} onSubmit={handleFormSubmit} onSubmitWithNewTrip={handleSubmitWithNewTrip} onUploadPhoto={uploadPhoto} onClose={() => { setShowForm(false); setEditingLocation(null); }} />
+
+      {/* ====== 旅行故事相册：点时间轴胶囊翻开 ====== */}
+      {albumTrip && <TripAlbum key={albumTrip.id} trip={albumTrip} onClose={closeAlbum} />}
 
       {/* ====== 加载遮罩：覆盖在 App 之上，active=false 时中心圆形透明扩散露出底层 ====== */}
       <div style={{

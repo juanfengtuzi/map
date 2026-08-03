@@ -76,3 +76,13 @@ html, body, #root {
 .leaflet-tooltip-pane {
   will-change: transform;
 }
+
+/* 旅行故事相册动画 */
+@keyframes animal-album-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes animal-album-in {
+  from { opacity: 0; transform: scale(0.94) translateY(10px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
