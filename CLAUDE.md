@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-A single-page travel map (中国地图) built with React 18 + TypeScript + Vite. It records trips and locations for a couple, displayed on a Gaode (高德) tile map via Leaflet. **There is no backend server** — all data lives in this Git repo's `data/travels.json`, written via the GitHub Contents API. Deployed to GitHub Pages.
+A single-page travel map (中国地图) built with React 18 + TypeScript + Vite. It records trips and locations for a couple, displayed on a Gaode (高德) tile map via Leaflet. Visited provinces light up by trip color, each trip has a dashed route line, and clicking a timeline pill opens a fullscreen story album. **There is no backend server** — all data lives in this Git repo's `data/travels.json`, written via the GitHub Contents API. Deployed to GitHub Pages.
 
 The UI is built entirely with the `animal-island-ui` component library (Animal-Crossing style). Before touching any UI, run the `animal-island-ui-style` skill and consult `AI_USAGE.md` (at repo root; also shipped in `node_modules/animal-island-ui/`). Hard rules: import `'animal-island-ui/style'` once in `src/main.tsx`, never invent props, `Modal.title` is plain text (not the `<Title>` component), use only the 13-color NookPhone palette for `Card`/`Tag`/`Title`.
 
@@ -40,8 +40,12 @@ The data-sync layer went through a long debugging saga; its current invariants a
 ## Map Layer
 
 - `MapView.tsx`: Leaflet `MapContainer` with Gaode tiles (`GAODE_TILE_URL`, subdomains 1–4). `FitBounds` runs once on load (no animation). `FlyToTrip` animates to a trip's centroid when a timeline pill is clicked.
+- `ProvinceLayer.tsx` + `useProvinces.ts`: the China province GeoJSON is bundled (`src/assets/china-provinces.json`, Aliyun DataV `100000_full`, 34 provinces + 九段线, GCJ-02) so the layer always renders with no runtime fetch. Build the `L.geoJSON` layer once (custom pane `provinces`); only restyle when the `visitedMap` changes. `computeVisitedProvinces` (`utils/geo.ts`) derives visited adcode → trip color from trips.
+- `TripPolylines.tsx`: dashed route line per trip connecting its locations, colored by trip.
 - `LocationMarkers.tsx`: pins use `L.icon` (image-based) NOT `L.divIcon` — the divIcon variant visibly drifts during `flyTo` animations. Colors come from a precomputed `locationId → color` map. `Tooltip` shows city/date/description/photo.
-- `Timeline.tsx`: bottom horizontal scroll of `<Tag>` pills (one per trip), colored by trip.
+- `Timeline.tsx`: bottom horizontal scroll of `<Tag>` pills (one per trip), colored by trip. Clicking a pill flies to the trip AND opens `TripAlbum`.
+- `TripAlbum.tsx`: fullscreen story album for a trip — location carousel with photo/description/tags + progress bar; closes via ✕ or `Esc` (arrow keys navigate).
+- `useIsMobile.ts` (breakpoint 768): mobile pass — compact header, FAB pinned bottom-right (top-right on desktop), reduced bottom chrome.
 
 ## Deployment
 
